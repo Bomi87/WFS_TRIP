@@ -315,12 +315,195 @@
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+
+    .trip-filter-toolbar {
+      grid-template-columns: minmax(240px, 1fr) minmax(150px, 220px);
+      margin-bottom: 14px;
+    }
+
+    .active-trip-panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(8, 25, 44, .72);
+    }
+
+    .active-trip-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .active-trip-heading h2 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .active-trip-heading p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .trip-table-wrap {
+      overflow-x: auto;
+    }
+
+    .trip-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+    }
+
+    .trip-table th {
+      padding: 13px 15px;
+      text-align: left;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .06em;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .trip-table td {
+      padding: 16px 15px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    .trip-row:hover {
+      background: rgba(30, 160, 210, .05);
+    }
+
+    .trip-number-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .route-btn {
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 12px;
+      background: rgba(67, 151, 255, .18);
+      color: #8fc5ff;
+      font-weight: 800;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .route-btn:hover {
+      background: rgba(67, 151, 255, .28);
+    }
+
+    .trip-detail-row {
+      display: none;
+    }
+
+    .trip-detail-row.open {
+      display: table-row;
+    }
+
+    .trip-detail-row > td {
+      padding: 0;
+      background: rgba(2, 12, 25, .48);
+    }
+
+    .trip-detail-inner {
+      padding: 16px;
+    }
+
+    .trip-detail-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
     @media (max-width: 1080px) {
       .toolbar { grid-template-columns: 1fr 1fr 1fr; }
       .summary { grid-template-columns: repeat(4, minmax(0,1fr)); }
     }
 
     @media (max-width: 720px) {
+      .trip-filter-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .active-trip-heading {
+        padding: 15px;
+      }
+
+      .active-trip-heading p {
+        display: none;
+      }
+
+      .trip-table {
+        min-width: 0;
+      }
+
+      .trip-table thead {
+        display: none;
+      }
+
+      .trip-table,
+      .trip-table tbody,
+      .trip-table tr,
+      .trip-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .trip-row {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .trip-row td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 7px 0;
+        border: 0;
+      }
+
+      .trip-row td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: .06em;
+      }
+
+      .trip-number-cell {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .trip-detail-row {
+        display: none !important;
+      }
+
+      .trip-detail-row.open {
+        display: block !important;
+      }
+
+      .trip-detail-row > td {
+        display: block;
+      }
+
+      .trip-detail-top {
+        display: block;
+      }
+
+      .trip-badges {
+        margin-top: 10px;
+        justify-content: flex-start;
+      }
+
       .app { padding: 11px; }
       .topbar { margin: -11px -11px 13px; padding: 10px 11px; }
       .brand p { display: none; }
@@ -351,40 +534,16 @@
       <button class="btn primary" id="refreshBtn">↻ 새로고침</button>
     </header>
 
-    <section class="toolbar">
-      <input class="input wide" id="searchInput" placeholder="Trip, 기체, 공항, 서비스 검색">
+    <section class="toolbar trip-filter-toolbar">
+      <input
+        class="input"
+        id="tripNumberFilter"
+        placeholder="TRIP NUMBER 검색"
+        autocomplete="off"
+      >
 
-      <select class="select" id="tailFilter">
+      <select class="select" id="aircraftFilter">
         <option value="">전체 기체</option>
-      </select>
-
-      <select class="select" id="statusFilter">
-        <option value="">전체 준비상태</option>
-        <option value="ACTION REQUIRED">조치 필요</option>
-        <option value="PENDING">Pending</option>
-        <option value="IN PROGRESS">In Progress</option>
-        <option value="READY">Ready</option>
-        <option value="CHECK">Check</option>
-      </select>
-
-      <select class="select" id="daysPast">
-        <option value="0">오늘부터</option>
-        <option value="1" selected>어제부터</option>
-        <option value="3">3일 전부터</option>
-        <option value="7">7일 전부터</option>
-      </select>
-
-      <select class="select" id="daysFuture">
-        <option value="14">향후 14일</option>
-        <option value="30">향후 30일</option>
-        <option value="45" selected>향후 45일</option>
-        <option value="90">향후 90일</option>
-      </select>
-
-      <select class="select" id="maxTrips">
-        <option value="8">최대 8 Trips</option>
-        <option value="12" selected>최대 12 Trips</option>
-        <option value="20">최대 20 Trips</option>
       </select>
     </section>
 
@@ -421,12 +580,8 @@
 
     const el = {
       refreshBtn: document.getElementById('refreshBtn'),
-      searchInput: document.getElementById('searchInput'),
-      tailFilter: document.getElementById('tailFilter'),
-      statusFilter: document.getElementById('statusFilter'),
-      daysPast: document.getElementById('daysPast'),
-      daysFuture: document.getElementById('daysFuture'),
-      maxTrips: document.getElementById('maxTrips'),
+      tripNumberFilter: document.getElementById('tripNumberFilter'),
+      aircraftFilter: document.getElementById('aircraftFilter'),
       loading: document.getElementById('loading'),
       tripList: document.getElementById('tripList'),
       updatedAt: document.getElementById('updatedAt'),
@@ -450,17 +605,20 @@
 
     function bindEvents() {
       el.refreshBtn.addEventListener('click', function () { loadDashboard(true); });
-      el.searchInput.addEventListener('input', applyLocalFilters);
-      el.tailFilter.addEventListener('change', applyLocalFilters);
-      el.statusFilter.addEventListener('change', applyLocalFilters);
-      el.daysPast.addEventListener('change', function () { loadDashboard(true); });
-      el.daysFuture.addEventListener('change', function () { loadDashboard(true); });
-      el.maxTrips.addEventListener('change', function () { loadDashboard(true); });
+      el.tripNumberFilter.addEventListener('input', applyLocalFilters);
+      el.aircraftFilter.addEventListener('change', applyLocalFilters);
 
       el.tripList.addEventListener('click', function (event) {
-        const head = event.target.closest('.trip-head');
-        if (!head) return;
-        head.closest('.trip-card').classList.toggle('open');
+        const button = event.target.closest('.route-btn');
+        if (!button) return;
+
+        const detailId = button.getAttribute('data-detail-id');
+        const detail = document.getElementById(detailId);
+        if (!detail) return;
+
+        const isOpen = detail.classList.toggle('open');
+        button.textContent = isOpen ? '닫기' : 'ROUTE';
+        button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       });
     }
 
@@ -477,9 +635,9 @@
         const response = await jsonp(BACKEND_URL, {
           action: force ? 'refresh' : 'dashboard',
           force: force ? '1' : '0',
-          daysPast: el.daysPast.value,
-          daysFuture: el.daysFuture.value,
-          maxTrips: el.maxTrips.value
+          daysPast: '1',
+          daysFuture: '90',
+          maxTrips: '20'
         }, 180000);
 
         if (!response || (!response.success && !response.partialSuccess)) {
@@ -489,8 +647,8 @@
         state.response = response;
         state.trips = response.trips || [];
 
+        updateAircraftFilter(state.trips);
         updateSummary(response.summary || {});
-        updateTailFilter(response.tails || []);
         applyLocalFilters();
 
         el.updatedAt.textContent = '업데이트: ' + formatDateTime(response.generatedAtUtc);
@@ -510,40 +668,55 @@
 
 
     function applyLocalFilters() {
-      const q = el.searchInput.value.trim().toLowerCase();
-      const tail = el.tailFilter.value;
-      const status = el.statusFilter.value;
+      const tripNumber = el.tripNumberFilter.value.trim().toLowerCase();
+      const aircraft = el.aircraftFilter.value.trim().toUpperCase();
 
       const filtered = state.trips.filter(function (trip) {
-        if (tail && trip.aircraftRegistry !== tail) return false;
-        if (status && trip.overallStatus !== status) return false;
-        if (!q) return true;
+        const tripMatches = !tripNumber ||
+          String(
+            trip.tripNumber ||
+            trip.tripName ||
+            ''
+          ).toLowerCase().includes(tripNumber);
 
-        const text = [
-          trip.tripNumber,
-          trip.tripName,
-          trip.tripOwner,
-          trip.aircraftRegistry,
-          trip.aircraftType,
-          trip.route,
-          trip.overallStatus,
-          JSON.stringify(trip.legs || [])
-        ].join(' ').toLowerCase();
+        const aircraftMatches = !aircraft ||
+          String(trip.aircraftRegistry || '')
+            .trim()
+            .toUpperCase() === aircraft;
 
-        return text.includes(q);
+        return tripMatches && aircraftMatches;
       });
 
       renderTrips(filtered);
     }
 
 
-    function updateTailFilter(tails) {
-      const current = el.tailFilter.value;
-      el.tailFilter.innerHTML = '<option value="">전체 기체</option>' +
-        (tails || []).map(function (tail) {
-          return '<option value="' + esc(tail) + '">' + esc(tail) + '</option>';
+    function updateAircraftFilter(trips) {
+      const current = el.aircraftFilter.value;
+
+      const tails = Array.from(
+        new Set(
+          (trips || [])
+            .map(function (trip) {
+              return String(trip.aircraftRegistry || '')
+                .trim()
+                .toUpperCase();
+            })
+            .filter(Boolean)
+        )
+      ).sort();
+
+      el.aircraftFilter.innerHTML =
+        '<option value="">전체 기체</option>' +
+        tails.map(function (tail) {
+          return '<option value="' + esc(tail) + '">' +
+            esc(tail) +
+            '</option>';
         }).join('');
-      if ((tails || []).includes(current)) el.tailFilter.value = current;
+
+      if (tails.indexOf(current) >= 0) {
+        el.aircraftFilter.value = current;
+      }
     }
 
 
@@ -563,48 +736,92 @@
         renderEmpty('조건에 맞는 Trip이 없습니다.');
         return;
       }
-      el.tripList.innerHTML = trips.map(renderTrip).join('');
+
+      el.tripList.innerHTML = `
+        <section class="active-trip-panel">
+          <div class="active-trip-heading">
+            <div>
+              <h2>Active Trip</h2>
+              <p>TRIP NUMBER로 조회하고 ROUTE 버튼에서 상세 준비상태를 확인할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <div class="trip-table-wrap">
+            <table class="trip-table">
+              <thead>
+                <tr>
+                  <th>TRIP NUMBER</th>
+                  <th>A/C</th>
+                  <th>STATUS</th>
+                  <th>FROM</th>
+                  <th>TO</th>
+                  <th>LEGS</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${trips.map(renderTrip).join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
     }
 
 
-    function renderTrip(trip) {
+    function renderTrip(trip, index) {
       const title = trip.tripNumber || trip.tripName || ('Trip ' + trip.tripId.slice(0, 8));
-      const s = trip.summary || {};
+      const detailId = 'tripDetail_' + index + '_' + String(trip.tripId || '').replace(/[^a-zA-Z0-9]/g, '');
+      const startDate = formatDateOnly(trip.startLocal || trip.startUtc);
+      const endDate = formatDateOnly(trip.endLocal || trip.endUtc);
 
       return `
-        <article class="trip-card">
-          <div class="trip-head">
-            <div>
-              <div class="trip-title-row">
-                <div class="trip-title">${esc(title)}</div>
-                ${statusPill(trip.overallStatus)}
-                ${trip.isTba ? '<span class="pill s-required-no-status"><span class="dot"></span>TBA</span>' : ''}
-                ${trip.isTentative ? '<span class="pill s-pending"><span class="dot"></span>TENTATIVE</span>' : ''}
-              </div>
-              <div class="route">${esc(trip.route || 'Route 없음')}</div>
-              <div class="meta">
-                <span>${esc(trip.aircraftRegistry || 'REG N/A')}</span>
-                <span>${esc(trip.aircraftType || '')}</span>
-                <span>${esc(formatRange(trip.startLocal, trip.endLocal))}</span>
-                <span>${trip.legCount || 0} LEGS</span>
-                <span>MESSAGES ${trip.messages ? trip.messages.length : 0}</span>
-              </div>
+        <tr class="trip-row">
+          <td data-label="TRIP NUMBER">
+            <div class="trip-number-cell">
+              <strong>${esc(title)}</strong>
+              <button
+                class="route-btn"
+                type="button"
+                data-detail-id="${esc(detailId)}"
+                aria-expanded="false"
+              >ROUTE</button>
             </div>
+          </td>
+          <td data-label="A/C"><strong>${esc(trip.aircraftRegistry || 'N/A')}</strong></td>
+          <td data-label="STATUS">${statusPill(trip.overallStatus)}</td>
+          <td data-label="FROM">${esc(startDate)}</td>
+          <td data-label="TO">${esc(endDate)}</td>
+          <td data-label="LEGS"><strong>${trip.legCount || 0}</strong></td>
+        </tr>
 
-            <div class="trip-badges">
-              ${countPill('CONFIRMED', s.confirmed)}
-              ${countPill('IN PROGRESS', s.inProgress)}
-              ${countPill('PENDING', s.pending)}
-              ${countPill('REQUIRED_NO_STATUS', s.requiredNoStatus)}
-              ${countPill('OWN', s.own)}
+        <tr class="trip-detail-row" id="${esc(detailId)}">
+          <td colspan="6">
+            <div class="trip-detail-inner">
+              <div class="trip-detail-top">
+                <div>
+                  <div class="route">${esc(trip.route || 'Route 없음')}</div>
+                  <div class="meta">
+                    <span>${esc(trip.aircraftRegistry || 'REG N/A')}</span>
+                    <span>${esc(trip.aircraftType || '')}</span>
+                    <span>${esc(formatRange(trip.startLocal, trip.endLocal))}</span>
+                    <span>MESSAGES ${trip.messages ? trip.messages.length : 0}</span>
+                  </div>
+                </div>
+
+                <div class="trip-badges">
+                  ${countPill('CONFIRMED', (trip.summary || {}).confirmed)}
+                  ${countPill('IN PROGRESS', (trip.summary || {}).inProgress)}
+                  ${countPill('PENDING', (trip.summary || {}).pending)}
+                  ${countPill('REQUIRED_NO_STATUS', (trip.summary || {}).requiredNoStatus)}
+                  ${countPill('OWN', (trip.summary || {}).own)}
+                </div>
+              </div>
+
+              ${renderMessageBox(trip)}
+              ${(trip.legs || []).map(renderLeg).join('')}
             </div>
-          </div>
-
-          <div class="trip-body">
-            ${renderMessageBox(trip)}
-            ${(trip.legs || []).map(renderLeg).join('')}
-          </div>
-        </article>
+          </td>
+        </tr>
       `;
     }
 
@@ -854,6 +1071,19 @@
       if (!value) return '-';
       const s = String(value).replace('T', ' ');
       return s.endsWith('Z') ? s.slice(0, 16) + 'Z' : s.slice(0, 16) + 'Z';
+    }
+
+
+    function formatDateOnly(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+
+      return [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0')
+      ].join('-');
     }
 
 
