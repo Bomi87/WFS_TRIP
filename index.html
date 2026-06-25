@@ -216,8 +216,12 @@
       font-weight: 800;
     }
 
-    .leg-status {
-      flex: 0 0 auto;
+    .leg-summary-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+      max-width: 58%;
       padding-top: 1px;
     }
 
@@ -527,8 +531,10 @@
         display: block;
       }
 
-      .leg-status {
-        margin-top: 9px;
+      .leg-summary-pills {
+        max-width: none;
+        margin-top: 10px;
+        justify-content: flex-start;
       }
     }
   
@@ -851,6 +857,54 @@
       font-weight: 400 !important;
     }
 
+
+    /* ===== Leg별 상태 요약 ===== */
+    .leg-summary-pills .pill {
+      font-weight: 500 !important;
+    }
+
+    /* REQUIRED 보조 라벨은 일반 굵기 */
+    .required,
+    .required-tag,
+    .service-required,
+    .required-label {
+      font-weight: 400 !important;
+    }
+
+    /* 하위 상세 정보는 전체적으로 일반 굵기 */
+    .service-card,
+    .service-card *,
+    .child-service,
+    .child-service *,
+    .service-note,
+    .service-note *,
+    .station-grid,
+    .station-grid * {
+      font-weight: 400 !important;
+    }
+
+    /* 다만 서비스명/공항명은 가독성을 위해 중간 굵기만 유지 */
+    .station-title,
+    .service-name,
+    .service-card > .service-row > strong,
+    .service-card .service-title {
+      font-weight: 600 !important;
+    }
+
+    /* 상태 라벨도 일반~중간 굵기 */
+    .service-card .status,
+    .service-card .pill,
+    .child-service .status,
+    .child-service .pill {
+      font-weight: 500 !important;
+    }
+
+    @media (max-width: 720px) {
+      .leg-summary-pills {
+        width: 100%;
+      }
+    }
+
 </style>
 </head>
 
@@ -1142,8 +1196,12 @@
               </div>
             </div>
 
-            <div class="leg-status">
-              ${statusPill(leg.readinessStatus)}
+            <div class="leg-summary-pills">
+              ${countPill('CONFIRMED', (leg.summary || {}).confirmed)}
+              ${countPill('IN PROGRESS', (leg.summary || {}).inProgress)}
+              ${countPill('PENDING', (leg.summary || {}).pending)}
+              ${countPill('REQUIRED_NO_STATUS', (leg.summary || {}).requiredNoStatus)}
+              ${countPill('OWN', (leg.summary || {}).own)}
             </div>
           </div>
 
