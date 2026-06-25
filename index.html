@@ -653,6 +653,204 @@
       }
     }
 
+
+    /* ===== 상태 표시 통합 ===== */
+    .s-in-progress {
+      color: #ffb13b !important;
+      border-color: rgba(255, 177, 59, .35) !important;
+      background: rgba(255, 177, 59, .08) !important;
+    }
+
+    .s-in-progress .dot,
+    .s-in-progress i {
+      background: #ffb13b !important;
+      box-shadow: 0 0 0 3px rgba(255, 177, 59, .10);
+    }
+
+    .s-pending {
+      color: #ffb13b !important;
+      border-color: rgba(255, 177, 59, .35) !important;
+      background: rgba(255, 177, 59, .08) !important;
+    }
+
+    .s-pending .dot,
+    .s-pending i {
+      background: #ffb13b !important;
+      box-shadow: 0 0 0 3px rgba(255, 177, 59, .10);
+    }
+
+    /* Handling 하위항목 등 세부 텍스트 확대 */
+    .child-service {
+      font-size: 1rem !important;
+      line-height: 1.7 !important;
+      padding: 4px 0 !important;
+    }
+
+    .child-service span:first-child {
+      font-size: 1rem !important;
+    }
+
+    .child-service .status,
+    .child-service .pill {
+      font-size: .9rem !important;
+    }
+
+    .service-note {
+      font-size: .95rem !important;
+      line-height: 1.55 !important;
+    }
+
+    @media (max-width: 720px) {
+      .child-service,
+      .child-service span:first-child {
+        font-size: .98rem !important;
+      }
+
+      .child-service .status,
+      .child-service .pill {
+        font-size: .86rem !important;
+      }
+    }
+
+
+    /* ===== 상태 색상 원래 구분 ===== */
+    .s-action-required {
+      color: #ff657a !important;
+      border-color: rgba(255, 101, 122, .42) !important;
+      background: rgba(255, 101, 122, .10) !important;
+    }
+
+    .s-action-required .dot,
+    .s-action-required i {
+      background: #ff657a !important;
+      box-shadow: 0 0 0 3px rgba(255, 101, 122, .12) !important;
+    }
+
+    .s-pending {
+      color: #ffb13b !important;
+      border-color: rgba(255, 177, 59, .38) !important;
+      background: rgba(255, 177, 59, .08) !important;
+    }
+
+    .s-pending .dot,
+    .s-pending i {
+      background: #ffb13b !important;
+      box-shadow: 0 0 0 3px rgba(255, 177, 59, .10) !important;
+    }
+
+    .s-in-progress {
+      color: #35bdf3 !important;
+      border-color: rgba(53, 189, 243, .38) !important;
+      background: rgba(53, 189, 243, .08) !important;
+    }
+
+    .s-in-progress .dot,
+    .s-in-progress i {
+      background: #35bdf3 !important;
+      box-shadow: 0 0 0 3px rgba(53, 189, 243, .10) !important;
+    }
+
+    /* ===== 상위 Trip 행과 상세영역 시각적 구분 ===== */
+    .trip-detail-row > td {
+      padding: 0 !important;
+      background: #06111f !important;
+      border-bottom: 2px solid rgba(77, 174, 230, .28) !important;
+    }
+
+    .trip-detail-shell {
+      margin: 14px 18px 20px;
+      border: 1px solid rgba(77, 174, 230, .34);
+      border-left: 5px solid #35bdf3;
+      border-radius: 15px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(19, 47, 76, .72), rgba(7, 21, 36, .96));
+      box-shadow:
+        0 14px 30px rgba(0, 0, 0, .24),
+        inset 0 1px 0 rgba(255, 255, 255, .035);
+    }
+
+    .trip-detail-label {
+      padding: 9px 15px;
+      background: rgba(53, 189, 243, .12);
+      border-bottom: 1px solid rgba(77, 174, 230, .30);
+      color: #7fd8ff;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+
+    .trip-detail-inner {
+      padding: 18px !important;
+      background: transparent !important;
+    }
+
+    .trip-detail-top {
+      padding: 2px 2px 14px;
+      margin-bottom: 16px !important;
+      border-bottom: 1px solid rgba(77, 174, 230, .24);
+    }
+
+    .trip-detail-top .route {
+      color: #ffffff;
+      font-size: 1.18rem;
+    }
+
+    .leg-card {
+      border: 1px solid rgba(90, 145, 190, .32) !important;
+      background: rgba(7, 22, 38, .88) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+    }
+
+    .leg-card + .leg-card {
+      margin-top: 18px;
+    }
+
+    .leg-head {
+      background:
+        linear-gradient(90deg, rgba(26, 67, 105, .72), rgba(16, 42, 69, .72)) !important;
+      border-bottom: 1px solid rgba(90, 145, 190, .34) !important;
+    }
+
+    .station-grid {
+      background: rgba(3, 15, 27, .38);
+    }
+
+    @media (max-width: 720px) {
+      .trip-detail-shell {
+        margin: 10px 8px 14px;
+        border-left-width: 4px;
+      }
+
+      .trip-detail-inner {
+        padding: 12px !important;
+      }
+
+      .trip-detail-label {
+        font-size: .72rem;
+      }
+    }
+
+
+    /* 상태 라벨은 과도한 Bold를 제거해 본문과 자연스럽게 구분 */
+    .status,
+    .pill,
+    .service-status,
+    .child-service .status,
+    .child-service .pill,
+    .leg-status .status,
+    .leg-status .pill {
+      font-weight: 600 !important;
+    }
+
+    .child-service {
+      font-weight: 400 !important;
+    }
+
+    .child-service span:first-child {
+      font-weight: 400 !important;
+    }
+
 </style>
 </head>
 
@@ -873,8 +1071,11 @@
 
         <tr class="trip-detail-row" id="${esc(detailId)}">
           <td colspan="6">
-            <div class="trip-detail-inner">
-              <div class="trip-detail-top">
+            <div class="trip-detail-shell">
+              <div class="trip-detail-label">TRIP DETAIL</div>
+
+              <div class="trip-detail-inner">
+                <div class="trip-detail-top">
                 <div>
                   <div class="route">${esc(trip.route || 'Route 없음')}</div>
                 </div>
@@ -888,7 +1089,8 @@
                 </div>
               </div>
 
-              ${(trip.legs || []).map(renderLeg).join('')}
+                ${(trip.legs || []).map(renderLeg).join('')}
+              </div>
             </div>
           </td>
         </tr>
@@ -1063,11 +1265,7 @@
 
 
     function statusClass(status) {
-      const displayStatus = status === 'ACTION REQUIRED'
-        ? 'IN PROGRESS'
-        : status;
-
-      return 's-' + String(displayStatus || 'unknown')
+      return 's-' + String(status || 'unknown')
         .toLowerCase()
         .replace(/_/g, '-')
         .replace(/\s+/g, '-');
@@ -1075,8 +1273,10 @@
 
 
     function statusLabel(status) {
-      if (status === 'ACTION REQUIRED') return 'IN PROGRESS';
-      if (status === 'REQUIRED_NO_STATUS') return 'REQUIRED · NO STATUS';
+      if (status === 'REQUIRED_NO_STATUS') {
+        return 'REQUIRED · NO STATUS';
+      }
+
       return status || 'UNKNOWN';
     }
 
