@@ -1050,6 +1050,62 @@
       }
     }
 
+
+    /* Handling 하위항목 상태는 상위 상태와 구분되게 단순 텍스트형으로 표시 */
+    .child-row .status {
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      font-size: .82rem !important;
+      font-weight: 500 !important;
+      letter-spacing: .02em !important;
+      gap: 5px !important;
+    }
+
+    .child-row .status .dot {
+      width: 7px !important;
+      height: 7px !important;
+      box-shadow: none !important;
+    }
+
+    @media (max-width: 720px) {
+      .child-row .status {
+        font-size: .8rem !important;
+      }
+    }
+
+
+    /* 하위항목 영역을 상위 서비스 카드와 시각적으로 구분 */
+    .child-list {
+      margin-top: 10px !important;
+      padding: 10px 12px !important;
+      border-radius: 12px !important;
+      background: rgba(255, 255, 255, 0.035) !important;
+      border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    }
+
+    .child-row {
+      padding: 8px 10px !important;
+      border-radius: 8px !important;
+      background: rgba(255, 255, 255, 0.018) !important;
+    }
+
+    .child-row + .child-row {
+      margin-top: 4px !important;
+    }
+
+    @media (max-width: 720px) {
+      .child-list {
+        padding: 8px 10px !important;
+      }
+
+      .child-row {
+        padding: 7px 8px !important;
+      }
+    }
+
 </style>
 </head>
 
