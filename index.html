@@ -905,6 +905,69 @@
       }
     }
 
+
+    /* ===== 요청 반영 ===== */
+
+    /* Trip route 상태 밑줄 */
+    .route {
+      display: inline-block;
+      padding-bottom: 7px;
+      border-bottom: 4px solid transparent;
+    }
+
+    .route-status-confirmed {
+      border-bottom-color: #34d399 !important;
+    }
+
+    .route-status-pending {
+      border-bottom-color: #ffb13b !important;
+    }
+
+    .route-status-neutral {
+      border-bottom-color: rgba(148, 163, 184, .45) !important;
+    }
+
+    /* LEG 제목과 스케줄은 일반 굵기 */
+    .leg-route,
+    .leg-schedule-local,
+    .leg-schedule-utc {
+      font-weight: 400 !important;
+    }
+
+    /* REQUIRED 보조 라벨은 일반 굵기 */
+    .required,
+    .required-tag,
+    .service-required,
+    .required-label {
+      font-weight: 400 !important;
+    }
+
+    /* 하위 서비스 항목 글자 확대 */
+    .child-service,
+    .child-service span:first-child {
+      font-size: 1.06rem !important;
+      line-height: 1.75 !important;
+      font-weight: 400 !important;
+    }
+
+    .child-service .status,
+    .child-service .pill {
+      font-size: .95rem !important;
+      font-weight: 500 !important;
+    }
+
+    @media (max-width: 720px) {
+      .child-service,
+      .child-service span:first-child {
+        font-size: 1rem !important;
+      }
+
+      .child-service .status,
+      .child-service .pill {
+        font-size: .9rem !important;
+      }
+    }
+
 </style>
 </head>
 
@@ -1131,16 +1194,10 @@
               <div class="trip-detail-inner">
                 <div class="trip-detail-top">
                 <div>
-                  <div class="route">${esc(trip.route || 'Route 없음')}</div>
+                  <div class="route route-status-${routeUnderlineClass(trip)}">${esc(trip.route || 'Route 없음')}</div>
                 </div>
 
-                <div class="trip-badges">
-                  ${countPill('CONFIRMED', (trip.summary || {}).confirmed)}
-                  ${countPill('IN PROGRESS', (trip.summary || {}).inProgress)}
-                  ${countPill('PENDING', (trip.summary || {}).pending)}
-                  ${countPill('REQUIRED_NO_STATUS', (trip.summary || {}).requiredNoStatus)}
-                  ${countPill('OWN', (trip.summary || {}).own)}
-                </div>
+
               </div>
 
                 ${(trip.legs || []).map(renderLeg).join('')}
@@ -1149,6 +1206,30 @@
           </td>
         </tr>
       `;
+    }
+
+
+    function routeUnderlineClass(trip) {
+      const summary = trip && trip.summary ? trip.summary : {};
+
+      // NO STATUS는 밑줄 색상 판정에 영향을 주지 않음
+      if (Number(summary.pending || 0) > 0 ||
+          Number(summary.inProgress || 0) > 0) {
+        return 'pending';
+      }
+
+      const actionableCount =
+        Number(summary.confirmed || 0) +
+        Number(summary.completed || 0) +
+        Number(summary.own || 0);
+
+      if (actionableCount > 0 &&
+          Number(summary.pending || 0) === 0 &&
+          Number(summary.inProgress || 0) === 0) {
+        return 'confirmed';
+      }
+
+      return 'neutral';
     }
 
 
@@ -1332,7 +1413,7 @@
 
     function statusLabel(status) {
       if (status === 'REQUIRED_NO_STATUS') {
-        return 'REQUIRED · NO STATUS';
+        return 'NO STATUS';
       }
 
       return status || 'UNKNOWN';
