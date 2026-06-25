@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>WFS Trip Readiness</title>
+
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0b1828;
+      --panel2: #102238;
+      --panel3: #142b44;
+      --line: rgba(255,255,255,.10);
+      --text: #eef6ff;
+      --muted: #91a7bd;
+      --accent: #22b8d6;
+      --green: #39ca8c;
+      --blue: #2aa9e2;
+      --amber: #f1aa3d;
+      --red: #ef6672;
+      --purple: #d66ce8;
+      --gray: #7d8fa2;
+      --shadow: 0 18px 56px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 85% 0, rgba(34,184,214,.11), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, Pretendard, "Segoe UI", Arial, sans-serif;
+    }
+
+    button, input, select { font: inherit; }
+
+    .app { width: min(1450px, 100%); margin: 0 auto; padding: 16px; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      margin: -16px -16px 16px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: rgba(7,17,31,.90);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, #0c4b64, #0a273b);
+      border: 1px solid rgba(72,209,234,.28);
+      color: #5bdcf0; font-weight: 900;
+    }
+    .brand h1 { margin: 0; font-size: 18px; }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel2);
+      color: var(--text);
+      padding: 10px 13px;
+      cursor: pointer;
+    }
+    .btn.primary { background: linear-gradient(135deg, #189fbd, #147f9f); border-color: transparent; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(230px, 1fr) 140px 160px 135px 135px auto;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .input, .select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 11px 12px;
+      outline: none;
+    }
+    .input:focus, .select:focus { border-color: rgba(72,209,234,.58); }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .summary-card {
+      min-height: 80px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: linear-gradient(155deg, rgba(16,34,56,.96), rgba(11,24,40,.96));
+      box-shadow: var(--shadow);
+    }
+    .summary-card label { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .summary-card strong { display: block; margin-top: 8px; font-size: 25px; }
+    .summary-card.red strong { color: var(--red); }
+    .summary-card.amber strong { color: var(--amber); }
+    .summary-card.blue strong { color: var(--blue); }
+    .summary-card.green strong { color: var(--green); }
+    .summary-card.purple strong { color: var(--purple); }
+
+    .update-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .trip-list { display: grid; gap: 13px; }
+
+    .trip-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(145deg, rgba(11,24,40,.98), rgba(8,19,33,.98));
+      box-shadow: var(--shadow);
+    }
+
+    .trip-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      padding: 15px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .trip-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .trip-title { font-size: 19px; font-weight: 900; }
+    .route { margin-top: 7px; font-size: 14px; font-weight: 750; color: #ceddeb; word-break: break-word; }
+    .meta { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 11px; color: var(--muted); font-size: 11px; }
+    .trip-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-content: flex-start; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 27px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray); }
+    .s-confirmed .dot, .s-completed .dot, .s-ready .dot { background: var(--green); }
+    .s-in-progress .dot { background: var(--blue); }
+    .s-pending .dot { background: var(--amber); }
+    .s-action-required .dot, .s-cancelled .dot, .c-red .dot, .c-error .dot { background: var(--red); }
+    .s-required-no-status .dot { background: var(--purple); }
+    .s-own .dot, .s-unknown .dot, .s-no-data .dot { background: var(--gray); }
+    .c-yellow .dot, .c-amber .dot { background: var(--amber); }
+    .c-green .dot { background: var(--green); }
+    .c-blue .dot { background: var(--blue); }
+
+    .trip-body { display: none; padding: 13px; border-top: 1px solid var(--line); background: rgba(4,12,22,.30); }
+    .trip-card.open .trip-body { display: block; }
+
+    .message-box {
+      margin-bottom: 11px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,.025);
+      padding: 11px 12px;
+    }
+    .message-box h3 { margin: 0 0 7px; font-size: 11px; color: var(--muted); letter-spacing: .08em; }
+    .message-title { font-size: 12px; line-height: 1.45; }
+    .message-meta { margin-top: 5px; color: var(--muted); font-size: 10px; }
+
+    .leg-card {
+      margin-bottom: 11px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .leg-card:last-child { margin-bottom: 0; }
+
+    .leg-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 13px;
+      background: rgba(20,43,68,.50);
+      border-bottom: 1px solid var(--line);
+    }
+    .leg-route { font-size: 15px; font-weight: 900; }
+    .leg-time { color: var(--muted); font-size: 10px; line-height: 1.55; text-align: right; }
+
+    .section {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section:last-child { border-bottom: 0; }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      color: #d9e8f5;
+    }
+
+    .fp-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+    .fp-item {
+      padding: 9px 10px;
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+    }
+    .fp-item label { display: block; color: var(--muted); font-size: 9px; margin-bottom: 6px; }
+
+    .alert-list, .service-list { display: grid; gap: 7px; }
+    .alert-row, .service-row {
+      padding: 9px 10px;
+      border: 1px solid rgba(255,255,255,.075);
+      border-radius: 10px;
+      background: rgba(255,255,255,.025);
+    }
+    .alert-main, .service-main, .child-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .alert-desc, .service-name { min-width: 0; font-size: 12px; font-weight: 750; word-break: break-word; }
+    .status { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 900; white-space: nowrap; letter-spacing: .04em; }
+    .note { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .required { margin-left: 5px; color: #efa5f8; font-size: 8px; font-weight: 900; }
+
+    .child-list {
+      display: grid;
+      gap: 5px;
+      margin-top: 8px;
+      padding-top: 7px;
+      border-top: 1px dashed rgba(255,255,255,.10);
+    }
+    .child-row { padding-left: 10px; color: #c6d6e4; font-size: 10px; }
+
+    .station-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .station { padding: 12px 13px; min-width: 0; }
+    .station + .station { border-left: 1px solid var(--line); }
+    .station-title { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+    .station-code { font-size: 16px; font-weight: 900; }
+    .station-dir { color: var(--muted); font-size: 9px; letter-spacing: .08em; }
+
+    .empty {
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .loading { display: none; padding: 28px 0; text-align: center; color: var(--muted); font-size: 12px; }
+    .loading.show { display: block; }
+    .spinner {
+      width: 28px; height: 28px; margin: 0 auto 9px;
+      border: 3px solid rgba(255,255,255,.10);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      left: 50%; bottom: 20px;
+      transform: translate(-50%, 18px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #14283d;
+      box-shadow: var(--shadow);
+      font-size: 11px;
+      transition: .18s;
+      max-width: calc(100% - 28px);
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1080px) {
+      .toolbar { grid-template-columns: 1fr 1fr 1fr; }
+      .summary { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .app { padding: 11px; }
+      .topbar { margin: -11px -11px 13px; padding: 10px 11px; }
+      .brand p { display: none; }
+      .toolbar { grid-template-columns: 1fr 1fr; }
+      .toolbar .wide { grid-column: 1 / -1; }
+      .summary { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .trip-head { grid-template-columns: 1fr; }
+      .trip-badges { justify-content: flex-start; }
+      .station-grid { grid-template-columns: 1fr; }
+      .station + .station { border-left: 0; border-top: 1px solid var(--line); }
+      .fp-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .leg-head { display: block; }
+      .leg-time { margin-top: 6px; text-align: left; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">W</div>
+        <div>
+          <h1>WFS Trip Readiness</h1>
+          <p>Trip · Flight Planning · Alerts · Services</p>
+        </div>
+      </div>
+      <button class="btn primary" id="refreshBtn">↻ 새로고침</button>
+    </header>
+
+    <section class="toolbar">
+      <input class="input wide" id="searchInput" placeholder="Trip, 기체, 공항, 서비스 검색">
+
+      <select class="select" id="tailFilter">
+        <option value="">전체 기체</option>
+      </select>
+
+      <select class="select" id="statusFilter">
+        <option value="">전체 준비상태</option>
+        <option value="ACTION REQUIRED">조치 필요</option>
+        <option value="PENDING">Pending</option>
+        <option value="IN PROGRESS">In Progress</option>
+        <option value="READY">Ready</option>
+        <option value="CHECK">Check</option>
+      </select>
+
+      <select class="select" id="daysPast">
+        <option value="0">오늘부터</option>
+        <option value="1" selected>어제부터</option>
+        <option value="3">3일 전부터</option>
+        <option value="7">7일 전부터</option>
+      </select>
+
+      <select class="select" id="daysFuture">
+        <option value="14">향후 14일</option>
+        <option value="30">향후 30일</option>
+        <option value="45" selected>향후 45일</option>
+        <option value="90">향후 90일</option>
+      </select>
+
+      <select class="select" id="maxTrips">
+        <option value="8">최대 8 Trips</option>
+        <option value="12" selected>최대 12 Trips</option>
+        <option value="20">최대 20 Trips</option>
+      </select>
+    </section>
+
+    <section class="summary">
+      <div class="summary-card"><label>Trips</label><strong id="sumTrips">0</strong></div>
+      <div class="summary-card red"><label>Action Required</label><strong id="sumAction">0</strong></div>
+      <div class="summary-card green"><label>Ready Trips</label><strong id="sumReady">0</strong></div>
+      <div class="summary-card green"><label>Confirmed</label><strong id="sumConfirmed">0</strong></div>
+      <div class="summary-card blue"><label>In Progress</label><strong id="sumProgress">0</strong></div>
+      <div class="summary-card amber"><label>Pending</label><strong id="sumPending">0</strong></div>
+      <div class="summary-card purple"><label>Required / No Status</label><strong id="sumRequired">0</strong></div>
+    </section>
+
+    <div class="update-line">
+      <span id="updatedAt">업데이트 전</span>
+      <span id="cacheState"></span>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      WFS Trip 준비 상태를 불러오는 중입니다.
+    </div>
+
+    <main class="trip-list" id="tripList"></main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* Apps Script 웹 앱 배포 URL로 변경 */
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyYjouQMXa8LJ05OzTXdf8RcAMsnPi6zs5UYPfBZYimgyJ4y-abZGaK5Yb7xoeTETrorg/exec';
+
+    const state = { response: null, trips: [] };
+
+    const el = {
+      refreshBtn: document.getElementById('refreshBtn'),
+      searchInput: document.getElementById('searchInput'),
+      tailFilter: document.getElementById('tailFilter'),
+      statusFilter: document.getElementById('statusFilter'),
+      daysPast: document.getElementById('daysPast'),
+      daysFuture: document.getElementById('daysFuture'),
+      maxTrips: document.getElementById('maxTrips'),
+      loading: document.getElementById('loading'),
+      tripList: document.getElementById('tripList'),
+      updatedAt: document.getElementById('updatedAt'),
+      cacheState: document.getElementById('cacheState'),
+      toast: document.getElementById('toast'),
+      sumTrips: document.getElementById('sumTrips'),
+      sumAction: document.getElementById('sumAction'),
+      sumReady: document.getElementById('sumReady'),
+      sumConfirmed: document.getElementById('sumConfirmed'),
+      sumProgress: document.getElementById('sumProgress'),
+      sumPending: document.getElementById('sumPending'),
+      sumRequired: document.getElementById('sumRequired')
+    };
+
+
+    function init() {
+      bindEvents();
+      loadDashboard(false);
+    }
+
+
+    function bindEvents() {
+      el.refreshBtn.addEventListener('click', function () { loadDashboard(true); });
+      el.searchInput.addEventListener('input', applyLocalFilters);
+      el.tailFilter.addEventListener('change', applyLocalFilters);
+      el.statusFilter.addEventListener('change', applyLocalFilters);
+      el.daysPast.addEventListener('change', function () { loadDashboard(true); });
+      el.daysFuture.addEventListener('change', function () { loadDashboard(true); });
+      el.maxTrips.addEventListener('change', function () { loadDashboard(true); });
+
+      el.tripList.addEventListener('click', function (event) {
+        const head = event.target.closest('.trip-head');
+        if (!head) return;
+        head.closest('.trip-card').classList.toggle('open');
+      });
+    }
+
+
+    async function loadDashboard(force) {
+      if (!BACKEND_URL || BACKEND_URL.includes('PASTE_YOUR')) {
+        renderEmpty('BACKEND_URL에 Apps Script 웹 앱 배포 URL을 입력하세요.');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const response = await jsonp(BACKEND_URL, {
+          action: force ? 'refresh' : 'dashboard',
+          force: force ? '1' : '0',
+          daysPast: el.daysPast.value,
+          daysFuture: el.daysFuture.value,
+          maxTrips: el.maxTrips.value
+        }, 180000);
+
+        if (!response || (!response.success && !response.partialSuccess)) {
+          throw new Error(response && response.message ? response.message : '조회 실패');
+        }
+
+        state.response = response;
+        state.trips = response.trips || [];
+
+        updateSummary(response.summary || {});
+        updateTailFilter(response.tails || []);
+        applyLocalFilters();
+
+        el.updatedAt.textContent = '업데이트: ' + formatDateTime(response.generatedAtUtc);
+        el.cacheState.textContent = response.fromCache ? 'CACHE' : 'LIVE';
+
+        if (response.errors && response.errors.length) {
+          showToast('일부 API 조회 실패: ' + response.errors.length + '건');
+        }
+
+      } catch (err) {
+        renderEmpty(err.message || String(err));
+        showToast(err.message || String(err));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+
+    function applyLocalFilters() {
+      const q = el.searchInput.value.trim().toLowerCase();
+      const tail = el.tailFilter.value;
+      const status = el.statusFilter.value;
+
+      const filtered = state.trips.filter(function (trip) {
+        if (tail && trip.aircraftRegistry !== tail) return false;
+        if (status && trip.overallStatus !== status) return false;
+        if (!q) return true;
+
+        const text = [
+          trip.tripNumber,
+          trip.tripName,
+          trip.tripOwner,
+          trip.aircraftRegistry,
+          trip.aircraftType,
+          trip.route,
+          trip.overallStatus,
+          JSON.stringify(trip.legs || [])
+        ].join(' ').toLowerCase();
+
+        return text.includes(q);
+      });
+
+      renderTrips(filtered);
+    }
+
+
+    function updateTailFilter(tails) {
+      const current = el.tailFilter.value;
+      el.tailFilter.innerHTML = '<option value="">전체 기체</option>' +
+        (tails || []).map(function (tail) {
+          return '<option value="' + esc(tail) + '">' + esc(tail) + '</option>';
+        }).join('');
+      if ((tails || []).includes(current)) el.tailFilter.value = current;
+    }
+
+
+    function updateSummary(s) {
+      el.sumTrips.textContent = s.trips || 0;
+      el.sumAction.textContent = s.actionRequiredTrips || 0;
+      el.sumReady.textContent = s.readyTrips || 0;
+      el.sumConfirmed.textContent = s.confirmed || 0;
+      el.sumProgress.textContent = s.inProgress || 0;
+      el.sumPending.textContent = s.pending || 0;
+      el.sumRequired.textContent = s.requiredNoStatus || 0;
+    }
+
+
+    function renderTrips(trips) {
+      if (!trips.length) {
+        renderEmpty('조건에 맞는 Trip이 없습니다.');
+        return;
+      }
+      el.tripList.innerHTML = trips.map(renderTrip).join('');
+    }
+
+
+    function renderTrip(trip) {
+      const title = trip.tripNumber || trip.tripName || ('Trip ' + trip.tripId.slice(0, 8));
+      const s = trip.summary || {};
+
+      return `
+        <article class="trip-card">
+          <div class="trip-head">
+            <div>
+              <div class="trip-title-row">
+                <div class="trip-title">${esc(title)}</div>
+                ${statusPill(trip.overallStatus)}
+                ${trip.isTba ? '<span class="pill s-required-no-status"><span class="dot"></span>TBA</span>' : ''}
+                ${trip.isTentative ? '<span class="pill s-pending"><span class="dot"></span>TENTATIVE</span>' : ''}
+              </div>
+              <div class="route">${esc(trip.route || 'Route 없음')}</div>
+              <div class="meta">
+                <span>${esc(trip.aircraftRegistry || 'REG N/A')}</span>
+                <span>${esc(trip.aircraftType || '')}</span>
+                <span>${esc(formatRange(trip.startLocal, trip.endLocal))}</span>
+                <span>${trip.legCount || 0} LEGS</span>
+                <span>MESSAGES ${trip.messages ? trip.messages.length : 0}</span>
+              </div>
+            </div>
+
+            <div class="trip-badges">
+              ${countPill('CONFIRMED', s.confirmed)}
+              ${countPill('IN PROGRESS', s.inProgress)}
+              ${countPill('PENDING', s.pending)}
+              ${countPill('REQUIRED_NO_STATUS', s.requiredNoStatus)}
+              ${countPill('OWN', s.own)}
+            </div>
+          </div>
+
+          <div class="trip-body">
+            ${renderMessageBox(trip)}
+            ${(trip.legs || []).map(renderLeg).join('')}
+          </div>
+        </article>
+      `;
+    }
+
+
+    function renderMessageBox(trip) {
+      if (!trip.latestMessage) return '';
+      const m = trip.latestMessage;
+
+      return `
+        <section class="message-box">
+          <h3>TRIP MESSAGES · ${trip.messages.length}</h3>
+          <div class="message-title">${esc(m.title)}</div>
+          <div class="message-meta">
+            ${esc(m.direction || '')} · ${esc(formatUtc(m.dateSent))} · ATTACHMENTS ${m.numAttachments || 0}
+          </div>
+        </section>
+      `;
+    }
+
+
+    function renderLeg(leg) {
+      const fp = leg.flightPlanning || {};
+      const alerts = leg.annunciators || {};
+      const dep = leg.stations && leg.stations.departure || {};
+      const arr = leg.stations && leg.stations.arrival || {};
+      const enr = leg.stations && leg.stations.enroute || {};
+
+      return `
+        <section class="leg-card">
+          <div class="leg-head">
+            <div>
+              <div class="leg-route">LEG ${leg.legNo} · ${esc(leg.from)} → ${esc(leg.to)}</div>
+              <div class="meta">
+                <span>${esc(leg.aircraftRegistry || '')}</span>
+                <span>ETE ${esc(formatDuration(leg.eteMinutes))}</span>
+                ${leg.depIsTba ? '<span>TBA</span>' : ''}
+                ${leg.depIsTentative ? '<span>TENTATIVE</span>' : ''}
+              </div>
+            </div>
+            <div class="leg-time">
+              <div>DEP ${esc(formatUtc(leg.departureUtc))}</div>
+              <div>ARR ${esc(formatUtc(leg.arrivalUtc))}</div>
+              <div>${statusPill(leg.readinessStatus)}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <span>FLIGHT PLANNING</span>
+              ${statusPill(fp.aggregatedStatus)}
+            </div>
+            <div class="fp-grid">
+              ${fpItem('Flight Plan', fp.flightPlanComputeStatus)}
+              ${fpItem('Weight & Balance', fp.weightAndBalanceStatus)}
+              ${fpItem('Runway Analysis', fp.runwayAnalysisStatus)}
+              ${fpItem('ATC Filing', fp.atcFilingStatus)}
+              ${fpItem('Uplink', fp.uplinkedStatus)}
+              ${fpItem('Overall', fp.aggregatedStatus)}
+            </div>
+          </div>
+
+          ${(alerts.items || []).length ? `
+            <div class="section">
+              <div class="section-title">
+                <span>ACTION ITEMS / ANNUNCIATORS</span>
+                <span>${esc(alerts.aggregatedStatus || '')}</span>
+              </div>
+              <div class="alert-list">
+                ${alerts.items.map(renderAlert).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="station-grid">
+            ${renderStation(dep, 'DEPARTURE')}
+            ${renderStation(arr, 'ARRIVAL')}
+          </div>
+
+          ${(enr.services || []).length ? `
+            <div class="section">
+              ${renderStation(enr, 'ENROUTE')}
+            </div>
+          ` : ''}
+        </section>
+      `;
+    }
+
+
+    function fpItem(label, status) {
+      return `
+        <div class="fp-item">
+          <label>${esc(label)}</label>
+          ${statusPill(status)}
+        </div>
+      `;
+    }
+
+
+    function renderAlert(item) {
+      const cls = 'c-' + String(item.color || 'gray').toLowerCase();
+      return `
+        <div class="alert-row">
+          <div class="alert-main">
+            <div class="alert-desc">${esc(item.description || item.type || 'Alert')}</div>
+            <span class="status ${cls}"><span class="dot"></span>${esc(item.color || '')}</span>
+          </div>
+          ${item.type ? '<div class="note">' + esc(item.type) + '</div>' : ''}
+        </div>
+      `;
+    }
+
+
+    function renderStation(station, direction) {
+      const services = station.services || [];
+      return `
+        <div class="station">
+          <div class="station-title">
+            <div class="station-code">${esc(station.icao || direction)}</div>
+            <div class="station-dir">${esc(direction)}</div>
+          </div>
+          <div class="service-list">
+            ${services.length ? services.map(renderService).join('') : '<div class="empty">표시할 서비스 없음</div>'}
+          </div>
+        </div>
+      `;
+    }
+
+
+    function renderService(service) {
+      const name = service.confirmationNumber
+        ? service.name + ' (' + service.confirmationNumber + ')'
+        : service.name;
+
+      const details = [
+        service.confirmedBy ? 'Confirmed by ' + service.confirmedBy : '',
+        service.confirmedAtUtc ? formatUtc(service.confirmedAtUtc) : '',
+        service.notes || ''
+      ].filter(Boolean).join(' · ');
+
+      return `
+        <div class="service-row">
+          <div class="service-main">
+            <div class="service-name">
+              ${esc(name)}
+              ${service.required ? '<span class="required">REQUIRED</span>' : ''}
+            </div>
+            ${statusPill(service.status, true)}
+          </div>
+          ${details ? '<div class="note">' + esc(details) + '</div>' : ''}
+          ${(service.children || []).length ? `
+            <div class="child-list">
+              ${service.children.map(function (child) {
+                return `
+                  <div class="child-row">
+                    <span>${esc(child.name)}</span>
+                    ${statusPill(child.status, true)}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+
+    function statusPill(status, compact) {
+      const s = status || 'UNKNOWN';
+      return `<span class="${compact ? 'status' : 'pill'} ${statusClass(s)}"><span class="dot"></span>${esc(statusLabel(s))}</span>`;
+    }
+
+
+    function countPill(status, count) {
+      if (!count) return '';
+      return `<span class="pill ${statusClass(status)}"><span class="dot"></span>${esc(statusLabel(status))} ${count}</span>`;
+    }
+
+
+    function statusClass(status) {
+      return 's-' + String(status || 'unknown')
+        .toLowerCase()
+        .replace(/_/g, '-')
+        .replace(/\s+/g, '-');
+    }
+
+
+    function statusLabel(status) {
+      if (status === 'REQUIRED_NO_STATUS') return 'REQUIRED · NO STATUS';
+      return status || 'UNKNOWN';
+    }
+
+
+    function renderEmpty(message) {
+      el.tripList.innerHTML = '<div class="empty">' + esc(message) + '</div>';
+    }
+
+
+    function setLoading(show) {
+      el.loading.classList.toggle('show', !!show);
+      el.refreshBtn.disabled = !!show;
+    }
+
+
+    function jsonp(url, params, timeoutMs) {
+      return new Promise(function (resolve, reject) {
+        const cb = '__wfsTrip_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        const script = document.createElement('script');
+        const timer = setTimeout(function () {
+          cleanup();
+          reject(new Error('백엔드 응답 시간이 초과되었습니다.'));
+        }, timeoutMs || 120000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          if (script.parentNode) script.parentNode.removeChild(script);
+          try { delete window[cb]; } catch (e) {}
+        }
+
+        window[cb] = function (data) {
+          cleanup();
+          resolve(data);
+        };
+
+        const q = new URLSearchParams(Object.assign({}, params, { callback: cb }));
+        script.src = url + (url.includes('?') ? '&' : '?') + q.toString();
+        script.onerror = function () {
+          cleanup();
+          reject(new Error('백엔드 연결에 실패했습니다.'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+
+    function formatDateTime(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      }).format(d);
+    }
+
+
+    function formatUtc(value) {
+      if (!value) return '-';
+      const s = String(value).replace('T', ' ');
+      return s.endsWith('Z') ? s.slice(0, 16) + 'Z' : s.slice(0, 16) + 'Z';
+    }
+
+
+    function formatRange(start, end) {
+      if (!start && !end) return 'DATE N/A';
+      return localShort(start) + ' – ' + localShort(end);
+    }
+
+
+    function localShort(value) {
+      return value ? String(value).replace('T', ' ').slice(0, 16) : '-';
+    }
+
+
+    function formatDuration(minutes) {
+      const n = Number(minutes || 0);
+      if (!n) return '-';
+      const h = Math.floor(n / 60);
+      const m = n % 60;
+      return h ? h + 'H ' + m + 'M' : m + 'M';
+    }
+
+
+    function esc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(function () {
+        el.toast.classList.remove('show');
+      }, 3400);
+    }
+
+
+    init();
+  </script>
+</body>
+</html>
