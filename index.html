@@ -1419,6 +1419,90 @@ header {
   }
 }
 
+
+/* ===== 헤더 크기 최종 조정 ===== */
+
+/* PC */
+.topbar,
+header {
+  min-height: 82px !important;
+  padding: 14px 18px !important;
+}
+
+.brand {
+  gap: 14px !important;
+}
+
+.brand-mark {
+  width: 72px !important;
+  height: 72px !important;
+  flex: 0 0 72px !important;
+  border-radius: 18px !important;
+}
+
+.brand-mark img {
+  padding: 5px !important;
+}
+
+.brand h1 {
+  font-size: 1.95rem !important;
+  line-height: 1.08 !important;
+}
+
+.brand p {
+  margin-top: 5px !important;
+  font-size: .96rem !important;
+}
+
+/* 모바일 */
+@media (max-width: 720px) {
+  .topbar,
+  header {
+    min-height: 68px !important;
+    padding: 10px 11px !important;
+    gap: 8px !important;
+  }
+
+  .brand {
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .brand-mark {
+    width: 52px !important;
+    height: 52px !important;
+    flex: 0 0 52px !important;
+    border-radius: 14px !important;
+  }
+
+  .brand-mark img {
+    padding: 4px !important;
+  }
+
+  .brand h1 {
+    font-size: 1.38rem !important;
+    line-height: 1.08 !important;
+    white-space: nowrap;
+  }
+
+  .brand p {
+    display: block !important;
+    margin-top: 3px !important;
+    font-size: .72rem !important;
+    line-height: 1.25 !important;
+    white-space: nowrap;
+  }
+
+  #refreshBtn {
+    padding: 7px 9px !important;
+    border-radius: 9px !important;
+    font-size: .78rem !important;
+    line-height: 1 !important;
+    min-height: 32px !important;
+    flex: 0 0 auto !important;
+  }
+}
+
 </style>
 </head>
 
@@ -1480,13 +1564,38 @@ header {
         const button = event.target.closest('.route-btn');
         if (!button) return;
 
+        event.stopPropagation();
+
         const detailId = button.getAttribute('data-detail-id');
         const detail = document.getElementById(detailId);
         if (!detail) return;
 
-        const isOpen = detail.classList.toggle('open');
-        button.textContent = isOpen ? '닫기' : 'ROUTE';
-        button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        const willOpen = !detail.classList.contains('open');
+
+        closeOpenTripDetails();
+
+        if (willOpen) {
+          detail.classList.add('open');
+          button.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        if (event.target.closest('.trip-detail-row')) return;
+        if (event.target.closest('.route-btn')) return;
+
+        closeOpenTripDetails();
+      });
+    }
+
+
+    function closeOpenTripDetails() {
+      document.querySelectorAll('.trip-detail-row.open').forEach(function (detail) {
+        detail.classList.remove('open');
+      });
+
+      document.querySelectorAll('.route-btn[aria-expanded="true"]').forEach(function (button) {
+        button.setAttribute('aria-expanded', 'false');
       });
     }
 
