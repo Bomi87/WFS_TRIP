@@ -968,6 +968,88 @@
       }
     }
 
+
+    /* Handling 하위항목 실제 클래스(child-row) 글자 확대 */
+    .child-list {
+      gap: 4px !important;
+      margin-top: 8px !important;
+    }
+
+    .child-row {
+      padding: 6px 10px 6px 12px !important;
+      font-size: 1rem !important;
+      line-height: 1.55 !important;
+      color: #d8e7f3 !important;
+      font-weight: 400 !important;
+    }
+
+    .child-row > span:first-child {
+      font-size: 1rem !important;
+      font-weight: 400 !important;
+    }
+
+    .child-row .status,
+    .child-row .pill {
+      font-size: .92rem !important;
+      font-weight: 500 !important;
+    }
+
+    @media (max-width: 720px) {
+      .child-row,
+      .child-row > span:first-child {
+        font-size: .98rem !important;
+      }
+
+      .child-row .status,
+      .child-row .pill {
+        font-size: .88rem !important;
+      }
+    }
+
+
+    /* 출/도착 공항 코드를 회색 캡슐형 배지로 표시 */
+    .station-title {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-bottom: 10px !important;
+    }
+
+    .station-code {
+      display: inline-flex !important;
+      align-items: center !important;
+      min-height: 34px !important;
+      padding: 6px 14px !important;
+      border-radius: 999px !important;
+      background: linear-gradient(180deg, rgba(146, 163, 184, .28), rgba(103, 120, 142, .22)) !important;
+      border: 1px solid rgba(170, 186, 205, .22) !important;
+      color: #eef5fb !important;
+      font-size: 1.08rem !important;
+      font-weight: 700 !important;
+      letter-spacing: .01em !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .station-dir {
+      color: #8eb8db !important;
+      font-size: .68rem !important;
+      letter-spacing: .14em !important;
+      font-weight: 500 !important;
+    }
+
+    @media (max-width: 720px) {
+      .station-code {
+        min-height: 32px !important;
+        padding: 5px 12px !important;
+        font-size: 1rem !important;
+      }
+
+      .station-dir {
+        font-size: .64rem !important;
+      }
+    }
+
 </style>
 </head>
 
