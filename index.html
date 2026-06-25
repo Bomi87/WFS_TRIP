@@ -204,13 +204,51 @@
     .leg-head {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
       gap: 14px;
-      padding: 12px 13px;
+      padding: 14px 13px;
       background: rgba(20,43,68,.50);
       border-bottom: 1px solid var(--line);
     }
-    .leg-route { font-size: 15px; font-weight: 900; }
-    .leg-time { color: var(--muted); font-size: 10px; line-height: 1.55; text-align: right; }
+
+    .leg-schedule-wrap {
+      min-width: 0;
+    }
+
+    .leg-route {
+      font-size: 15px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .leg-schedule-local {
+      color: #eaf4ff;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .leg-schedule-utc {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .leg-flags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      color: var(--warning);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .leg-status {
+      flex: 0 0 auto;
+      padding-top: 1px;
+    }
 
     .section {
       padding: 12px 13px;
@@ -515,8 +553,13 @@
       .station-grid { grid-template-columns: 1fr; }
       .station + .station { border-left: 0; border-top: 1px solid var(--line); }
       .fp-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-      .leg-head { display: block; }
-      .leg-time { margin-top: 6px; text-align: left; }
+      .leg-head {
+        display: block;
+      }
+
+      .leg-status {
+        margin-top: 9px;
+      }
     }
   </style>
 </head>
@@ -800,12 +843,6 @@
               <div class="trip-detail-top">
                 <div>
                   <div class="route">${esc(trip.route || 'Route 없음')}</div>
-                  <div class="meta">
-                    <span>${esc(trip.aircraftRegistry || 'REG N/A')}</span>
-                    <span>${esc(trip.aircraftType || '')}</span>
-                    <span>${esc(formatRange(trip.startLocal, trip.endLocal))}</span>
-                    <span>MESSAGES ${trip.messages ? trip.messages.length : 0}</span>
-                  </div>
                 </div>
 
                 <div class="trip-badges">
@@ -817,7 +854,6 @@
                 </div>
               </div>
 
-              ${renderMessageBox(trip)}
               ${(trip.legs || []).map(renderLeg).join('')}
             </div>
           </td>
@@ -843,7 +879,6 @@
 
 
     function renderLeg(leg) {
-      const fp = leg.flightPlanning || {};
       const alerts = leg.annunciators || {};
       const dep = leg.stations && leg.stations.departure || {};
       const arr = leg.stations && leg.stations.arrival || {};
@@ -852,34 +887,27 @@
       return `
         <section class="leg-card">
           <div class="leg-head">
-            <div>
-              <div class="leg-route">LEG ${leg.legNo} · ${esc(leg.from)} → ${esc(leg.to)}</div>
-              <div class="meta">
-                <span>${esc(leg.aircraftRegistry || '')}</span>
-                <span>ETE ${esc(formatDuration(leg.eteMinutes))}</span>
+            <div class="leg-schedule-wrap">
+              <div class="leg-route">
+                LEG ${leg.legNo} · ${esc(leg.from)} → ${esc(leg.to)}
+              </div>
+
+              <div class="leg-schedule-local">
+                ${esc(formatLocalSchedule(leg.departureLocal, leg.arrivalLocal))}
+              </div>
+
+              <div class="leg-schedule-utc">
+                (${esc(formatUtcSchedule(leg.departureUtc, leg.arrivalUtc))})
+              </div>
+
+              <div class="leg-flags">
                 ${leg.depIsTba ? '<span>TBA</span>' : ''}
                 ${leg.depIsTentative ? '<span>TENTATIVE</span>' : ''}
               </div>
             </div>
-            <div class="leg-time">
-              <div>DEP ${esc(formatUtc(leg.departureUtc))}</div>
-              <div>ARR ${esc(formatUtc(leg.arrivalUtc))}</div>
-              <div>${statusPill(leg.readinessStatus)}</div>
-            </div>
-          </div>
 
-          <div class="section">
-            <div class="section-title">
-              <span>FLIGHT PLANNING</span>
-              ${statusPill(fp.aggregatedStatus)}
-            </div>
-            <div class="fp-grid">
-              ${fpItem('Flight Plan', fp.flightPlanComputeStatus)}
-              ${fpItem('Weight & Balance', fp.weightAndBalanceStatus)}
-              ${fpItem('Runway Analysis', fp.runwayAnalysisStatus)}
-              ${fpItem('ATC Filing', fp.atcFilingStatus)}
-              ${fpItem('Uplink', fp.uplinkedStatus)}
-              ${fpItem('Overall', fp.aggregatedStatus)}
+            <div class="leg-status">
+              ${statusPill(leg.readinessStatus)}
             </div>
           </div>
 
@@ -1064,6 +1092,32 @@
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit'
       }).format(d);
+    }
+
+
+    function formatLocalSchedule(departure, arrival) {
+      return formatDateTimeSuffix(departure, 'L') +
+        ' → ' +
+        formatDateTimeSuffix(arrival, 'L');
+    }
+
+
+    function formatUtcSchedule(departure, arrival) {
+      return formatDateTimeSuffix(departure, 'Z') +
+        ' → ' +
+        formatDateTimeSuffix(arrival, 'Z');
+    }
+
+
+    function formatDateTimeSuffix(value, suffix) {
+      if (!value) return '-';
+
+      const text = String(value)
+        .replace('T', ' ')
+        .replace(/Z$/i, '')
+        .slice(0, 16);
+
+      return text + suffix;
     }
 
 
