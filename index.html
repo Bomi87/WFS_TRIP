@@ -1106,6 +1106,31 @@
       }
     }
 
+
+    /* 하위 서비스는 상위 서비스보다 한 단계 작게 표시 */
+    .child-row,
+    .child-row > span:first-child {
+      font-size: .92rem !important;
+      line-height: 1.5 !important;
+    }
+
+    .child-row .status,
+    .child-row .pill {
+      font-size: .76rem !important;
+    }
+
+    @media (max-width: 720px) {
+      .child-row,
+      .child-row > span:first-child {
+        font-size: .9rem !important;
+      }
+
+      .child-row .status,
+      .child-row .pill {
+        font-size: .74rem !important;
+      }
+    }
+
 </style>
 </head>
 
@@ -1140,7 +1165,7 @@
 
   <script>
     /* Apps Script 웹 앱 배포 URL로 변경 */
-    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbydB2lQ3zfDXFFGpJV5qHe_B7HM48f4v_03f8hYGlCSfmC9CS99kGWvQ_IMTYh-X_X-hg/exec';
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxRYfB7U6T1Mpb_5HgbtNG_qKxoYKiVBxeaa2TxMho7LuXBXTHtSkaiLejeCplg5uTY/exec';
 
     const state = { response: null, trips: [] };
 
@@ -1496,10 +1521,17 @@
         ? service.name + ' (' + service.confirmationNumber + ')'
         : service.name;
 
+      const rawNotes = String(service.notes || '').trim();
+      const normalizedNotes = rawNotes.toUpperCase().replace(/\s+/g, ' ');
+      const redundantStatusNote =
+        normalizedNotes === (String(service.name || '').toUpperCase() + ': ' + String(service.status || '').toUpperCase()) ||
+        normalizedNotes === (String(service.name || '').toUpperCase() + ' ' + String(service.status || '').toUpperCase());
+
       const details = [
+        service.hotelName ? 'Hotel: ' + service.hotelName : '',
         service.confirmedBy ? 'Confirmed by ' + service.confirmedBy : '',
         service.confirmedAtUtc ? formatUtc(service.confirmedAtUtc) : '',
-        service.notes || ''
+        rawNotes && !redundantStatusNote ? rawNotes : ''
       ].filter(Boolean).join(' · ');
 
       return `
