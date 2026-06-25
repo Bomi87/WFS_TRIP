@@ -531,7 +531,129 @@
         margin-top: 9px;
       }
     }
-  </style>
+  
+    /* ===== 가독성 향상: 전체 글자 크기 확대 ===== */
+    html {
+      font-size: 17px;
+    }
+
+    body {
+      font-size: 17px;
+      line-height: 1.55;
+    }
+
+    .brand-title {
+      font-size: 1.45rem;
+    }
+
+    .select,
+    .input,
+    button {
+      font-size: 1rem;
+    }
+
+    .active-trip-heading h2 {
+      font-size: 1.35rem;
+    }
+
+    .trip-table th {
+      font-size: .82rem;
+    }
+
+    .trip-table td {
+      font-size: 1rem;
+    }
+
+    .trip-number-cell strong {
+      font-size: 1.05rem;
+    }
+
+    .route-btn {
+      font-size: .84rem;
+    }
+
+    .route {
+      font-size: 1.12rem;
+    }
+
+    .meta,
+    .section-title,
+    .station-label,
+    .service-note,
+    .child-service,
+    .message-meta {
+      font-size: .92rem;
+    }
+
+    .pill,
+    .status {
+      font-size: .84rem;
+      padding: 6px 10px;
+    }
+
+    .leg-route {
+      font-size: 1.12rem;
+    }
+
+    .leg-schedule-local {
+      font-size: 1rem;
+    }
+
+    .leg-schedule-utc {
+      font-size: .92rem;
+    }
+
+    .station-title {
+      font-size: 1.18rem;
+    }
+
+    .service-name {
+      font-size: 1.02rem;
+    }
+
+    .service-card,
+    .message-box,
+    .fp-item,
+    .alert-item {
+      font-size: 1rem;
+    }
+
+    @media (max-width: 720px) {
+      html {
+        font-size: 16px;
+      }
+
+      body {
+        font-size: 16px;
+      }
+
+      .brand-title {
+        font-size: 1.3rem;
+      }
+
+      .trip-table td {
+        font-size: 1rem;
+      }
+
+      .leg-route {
+        font-size: 1.08rem;
+      }
+
+      .leg-schedule-local {
+        font-size: .98rem;
+      }
+
+      .leg-schedule-utc {
+        font-size: .9rem;
+      }
+
+      .pill,
+      .status {
+        font-size: .82rem;
+      }
+    }
+
+</style>
 </head>
 
 <body>
@@ -941,7 +1063,11 @@
 
 
     function statusClass(status) {
-      return 's-' + String(status || 'unknown')
+      const displayStatus = status === 'ACTION REQUIRED'
+        ? 'IN PROGRESS'
+        : status;
+
+      return 's-' + String(displayStatus || 'unknown')
         .toLowerCase()
         .replace(/_/g, '-')
         .replace(/\s+/g, '-');
@@ -949,6 +1075,7 @@
 
 
     function statusLabel(status) {
+      if (status === 'ACTION REQUIRED') return 'IN PROGRESS';
       if (status === 'REQUIRED_NO_STATUS') return 'REQUIRED · NO STATUS';
       return status || 'UNKNOWN';
     }
