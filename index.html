@@ -1628,21 +1628,82 @@ header {
     }
 
   
-    /* ===== POB Gender column ===== */
-    .pob-table {
-      min-width: 840px;
+    /* ===== POB: PC 전체 컬럼 표시 / 모바일 가로 스크롤 ===== */
+    @media (min-width: 721px) {
+      .pob-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: visible;
+      }
+
+      .pob-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+      }
+
+      .pob-table th,
+      .pob-table td {
+        padding: 9px 10px !important;
+        font-size: .82rem !important;
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pob-table th:nth-child(1),
+      .pob-table td:nth-child(1) {
+        width: 31%;
+      }
+
+      .pob-table th:nth-child(2),
+      .pob-table td:nth-child(2) {
+        width: 22%;
+      }
+
+      .pob-table th:nth-child(3),
+      .pob-table td:nth-child(3) {
+        width: 22%;
+      }
+
+      .pob-table th:nth-child(4),
+      .pob-table td:nth-child(4) {
+        width: 15%;
+      }
+
+      .pob-table th:nth-child(5),
+      .pob-table td:nth-child(5) {
+        width: 10%;
+        text-align: center;
+      }
     }
 
-    .pob-table th,
-    .pob-table td {
-      white-space: nowrap;
-    }
+    @media (max-width: 720px) {
+      .pob-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
 
-    .pob-table th:last-child,
-    .pob-table td:last-child {
-      width: 76px;
-      min-width: 76px;
-      text-align: center;
+      .pob-table {
+        width: max-content !important;
+        min-width: 840px !important;
+        table-layout: auto !important;
+      }
+
+      .pob-table th,
+      .pob-table td {
+        white-space: nowrap !important;
+      }
+
+      .pob-table th:last-child,
+      .pob-table td:last-child {
+        width: 76px;
+        min-width: 76px;
+        text-align: center;
+      }
     }
 
   </style>
