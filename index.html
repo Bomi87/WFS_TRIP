@@ -1567,7 +1567,16 @@ header {
 
     let WFS_APP_STARTED = false;
 
-    const state = { response: null, trips: [] };
+    const state = {
+      response: null,
+      trips: [],
+      loadingDashboard: false
+    };
+
+    // 백엔드는 15분마다 실제 데이터를 갱신합니다.
+    // 열려 있는 프론트는 1분마다 저장된 최신 스냅샷만 가볍게 확인합니다.
+    const FRONTEND_SNAPSHOT_CHECK_MS = 60 * 1000;
+    let frontendSnapshotTimer = null;
 
     const el = {
       lastUpdated: document.getElementById('lastUpdated'),
@@ -1578,9 +1587,26 @@ header {
     };
 
 
-    function init() {
+    async function init() {
       bindEvents();
-      loadDashboard();
+      await loadDashboard(false);
+      startFrontendSnapshotCheck();
+    }
+
+
+    function startFrontendSnapshotCheck() {
+      if (frontendSnapshotTimer) {
+        window.clearInterval(frontendSnapshotTimer);
+      }
+
+      frontendSnapshotTimer = window.setInterval(function () {
+        // 백그라운드 탭에서는 불필요한 조회를 하지 않습니다.
+        if (document.visibilityState !== 'visible') {
+          return;
+        }
+
+        loadDashboard(true);
+      }, FRONTEND_SNAPSHOT_CHECK_MS);
     }
 
 
@@ -1613,6 +1639,13 @@ header {
 
         closeOpenTripDetails();
       });
+
+      // PDF를 열었다가 돌아오거나 백그라운드 탭이 다시 보이면 즉시 최신 스냅샷 확인
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+          loadDashboard(true);
+        }
+      });
     }
 
 
@@ -1627,13 +1660,21 @@ header {
     }
 
 
-    async function loadDashboard() {
+    async function loadDashboard(silent) {
+      if (state.loadingDashboard) {
+        return;
+      }
+
       if (!BACKEND_URL || BACKEND_URL.includes('PASTE_YOUR')) {
         renderEmpty('BACKEND_URL에 Apps Script 웹 앱 배포 URL을 입력하세요.');
         return;
       }
 
-      setLoading(true);
+      state.loadingDashboard = true;
+
+      if (!silent) {
+        setLoading(true);
+      }
 
       try {
         const response = await jsonp(BACKEND_URL, {
@@ -1644,25 +1685,64 @@ header {
         }, 180000);
 
         if (!response || (!response.success && !response.partialSuccess)) {
-          throw new Error(response && response.message ? response.message : '조회 실패');
+          throw new Error(
+            response && response.message
+              ? response.message
+              : '조회 실패'
+          );
         }
+
+        const previousGeneratedAt =
+          state.response && state.response.generatedAtUtc
+            ? String(state.response.generatedAtUtc)
+            : '';
+
+        const nextGeneratedAt =
+          response.generatedAtUtc
+            ? String(response.generatedAtUtc)
+            : '';
 
         state.response = response;
         state.trips = response.trips || [];
-        updateLastUpdated(response);
 
+        updateLastUpdated(response);
         updateAircraftFilter(state.trips);
         applyLocalFilters();
 
+        if (
+          silent &&
+          previousGeneratedAt &&
+          nextGeneratedAt &&
+          previousGeneratedAt !== nextGeneratedAt
+        ) {
+          showToast('Latest trip data has been updated.');
+        }
+
         if (response.errors && response.errors.length) {
-          showToast('일부 API 조회 실패: ' + response.errors.length + '건');
+          showToast(
+            '일부 API 조회 실패: ' +
+            response.errors.length +
+            '건'
+          );
         }
 
       } catch (err) {
-        renderEmpty(err.message || String(err));
-        showToast(err.message || String(err));
+        // 자동 확인 실패 때는 기존 화면을 지우지 않습니다.
+        if (!silent) {
+          renderEmpty(err.message || String(err));
+          showToast(err.message || String(err));
+        } else {
+          console.warn(
+            'Automatic snapshot check failed:',
+            err
+          );
+        }
       } finally {
-        setLoading(false);
+        state.loadingDashboard = false;
+
+        if (!silent) {
+          setLoading(false);
+        }
       }
     }
 
@@ -2047,29 +2127,43 @@ header {
 
 
     function updateLastUpdated(response) {
-      if (!el.lastUpdated) return;
+      if (!el.lastUpdated) {
+        return;
+      }
 
-      const generatedAt = response && response.generatedAtUtc;
+      const generatedAt =
+        response && response.generatedAtUtc;
+
       if (!generatedAt) {
-        el.lastUpdated.textContent = 'No last update time available';
+        el.lastUpdated.textContent =
+          'No last update time available';
         return;
       }
 
       const date = new Date(generatedAt);
+
       const text = Number.isNaN(date.getTime())
-        ? String(generatedAt)
-        : new Intl.DateTimeFormat('ko-KR', {
+        ? String(generatedAt).slice(0, 16)
+        : new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
-          }).format(date);
+            hour12: false
+          })
+            .format(date)
+            .replace(',', '');
 
-el.lastUpdated.textContent =
-  'Last Updated ' +
-  String(text || '').slice(0, 16) +
-  (response.stale ? ' · Previous data' : '');
+      el.lastUpdated.textContent =
+        'Last Updated ' +
+        text +
+        (response.stale
+          ? ' · Previous data'
+          : '');
+    }
+
 
     function jsonp(url, params, timeoutMs) {
       return new Promise(function (resolve, reject) {
