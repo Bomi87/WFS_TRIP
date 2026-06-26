@@ -1492,14 +1492,25 @@ header {
     line-height: 1.25 !important;
     white-space: nowrap;
   }
+}
 
-  #refreshBtn {
-    padding: 7px 9px !important;
-    border-radius: 9px !important;
-    font-size: .78rem !important;
-    line-height: 1 !important;
-    min-height: 32px !important;
-    flex: 0 0 auto !important;
+
+
+/* 자동 갱신 시각 표시 */
+.last-updated {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .last-updated {
+    max-width: 128px;
+    white-space: normal;
+    font-size: .68rem;
+    line-height: 1.25;
   }
 }
 
@@ -1530,7 +1541,7 @@ header {
           <p>Trip Status Checking System</p>
         </div>
       </div>
-      <button class="btn primary" id="refreshBtn">↻ 새로고침</button>
+      <div class="last-updated" id="lastUpdated">마지막 갱신 확인 중</div>
     </header>
 
     <section class="toolbar trip-filter-toolbar">
@@ -1552,14 +1563,14 @@ header {
 
   <script>
     /* Apps Script 웹 앱 배포 URL로 변경 */
-    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxKlg-rtU9H-7-fYLsNJCmKSX1HhO1N-kOfdT4sulcLyFcTKj8s3uwFT68rHdNUtqS55A/exec';
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyyLKR47nX0YJ_Vgob-AIbipjuPsFMvUYI9v6T7hrDFVB4cxV1crNwFqG4HhF8v2GR4_g/exec';
 
     let WFS_APP_STARTED = false;
 
     const state = { response: null, trips: [] };
 
     const el = {
-      refreshBtn: document.getElementById('refreshBtn'),
+      lastUpdated: document.getElementById('lastUpdated'),
       aircraftFilter: document.getElementById('aircraftFilter'),
       loading: document.getElementById('loading'),
       tripList: document.getElementById('tripList'),
@@ -1569,12 +1580,11 @@ header {
 
     function init() {
       bindEvents();
-      loadDashboard(false);
+      loadDashboard();
     }
 
 
     function bindEvents() {
-      el.refreshBtn.addEventListener('click', function () { loadDashboard(true); });
       el.aircraftFilter.addEventListener('change', applyLocalFilters);
 
       el.tripList.addEventListener('click', function (event) {
@@ -1617,7 +1627,7 @@ header {
     }
 
 
-    async function loadDashboard(force) {
+    async function loadDashboard() {
       if (!BACKEND_URL || BACKEND_URL.includes('PASTE_YOUR')) {
         renderEmpty('BACKEND_URL에 Apps Script 웹 앱 배포 URL을 입력하세요.');
         return;
@@ -1627,11 +1637,10 @@ header {
 
       try {
         const response = await jsonp(BACKEND_URL, {
-          action: force ? 'refresh' : 'dashboard',
-          force: force ? '1' : '0',
+          action: 'dashboard',
           daysPast: '1',
           daysFuture: '90',
-          maxTrips: '20'
+          maxTrips: '10'
         }, 180000);
 
         if (!response || (!response.success && !response.partialSuccess)) {
@@ -1640,6 +1649,7 @@ header {
 
         state.response = response;
         state.trips = response.trips || [];
+        updateLastUpdated(response);
 
         updateAircraftFilter(state.trips);
         applyLocalFilters();
@@ -2033,7 +2043,31 @@ header {
 
     function setLoading(show) {
       el.loading.classList.toggle('show', !!show);
-      el.refreshBtn.disabled = !!show;
+    }
+
+
+    function updateLastUpdated(response) {
+      if (!el.lastUpdated) return;
+
+      const generatedAt = response && response.generatedAtUtc;
+      if (!generatedAt) {
+        el.lastUpdated.textContent = '마지막 갱신 시각 없음';
+        return;
+      }
+
+      const date = new Date(generatedAt);
+      const text = Number.isNaN(date.getTime())
+        ? String(generatedAt)
+        : new Intl.DateTimeFormat('ko-KR', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          }).format(date);
+
+      el.lastUpdated.textContent =
+        '마지막 갱신 ' + text + (response.stale ? ' · 이전 데이터' : '');
     }
 
 
