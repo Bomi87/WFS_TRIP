@@ -2066,10 +2066,10 @@ header {
             second: '2-digit'
           }).format(date);
 
-      el.lastUpdated.textContent =
-        'Last Updated ' + text + (response.stale ? ' · 이전 데이터' : '');
-    }
-
+el.lastUpdated.textContent =
+  'Last Updated ' +
+  String(text || '').slice(0, 16) +
+  (response.stale ? ' · Previous data' : '');
 
     function jsonp(url, params, timeoutMs) {
       return new Promise(function (resolve, reject) {
