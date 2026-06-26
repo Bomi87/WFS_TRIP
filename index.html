@@ -1514,7 +1514,120 @@ header {
   }
 }
 
-</style>
+
+    /* ===== CREW / PAX MANIFEST ===== */
+    .pob-summary-button {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      min-height: 32px;
+      padding: 6px 10px;
+      border: 1px solid rgba(72, 209, 234, .30);
+      border-radius: 999px;
+      color: #9eeaff;
+      background: rgba(34, 184, 214, .10);
+      font-size: .82rem;
+      font-weight: 850;
+      line-height: 1.25;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .pob-summary-button:hover,
+    .pob-summary-button.open {
+      border-color: rgba(72, 209, 234, .62);
+      background: rgba(34, 184, 214, .19);
+    }
+
+    .pob-details {
+      display: none;
+      padding: 12px 13px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3, 15, 27, .56);
+    }
+
+    .pob-details.open {
+      display: block;
+    }
+
+    .pob-group + .pob-group {
+      margin-top: 14px;
+    }
+
+    .pob-group-title {
+      margin-bottom: 7px;
+      color: #8fdfff;
+      font-size: .86rem;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+
+    .pob-table-wrap {
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 11px;
+    }
+
+    .pob-table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+      background: rgba(255,255,255,.025);
+    }
+
+    .pob-table th,
+    .pob-table td {
+      padding: 10px 11px;
+      border-bottom: 1px solid rgba(255,255,255,.075);
+      text-align: left;
+      vertical-align: middle;
+      font-size: .86rem;
+    }
+
+    .pob-table th {
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
+      font-size: .75rem;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    .pob-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .pob-role {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 2px 6px;
+      border: 1px solid rgba(57, 202, 140, .30);
+      border-radius: 999px;
+      color: #78e7b5;
+      background: rgba(57, 202, 140, .08);
+      font-size: .68rem;
+      font-weight: 900;
+      vertical-align: middle;
+    }
+
+    .pob-expired {
+      color: #ff7f8d;
+      font-weight: 900;
+    }
+
+    @media (max-width: 720px) {
+      .pob-summary-button {
+        max-width: min(100%, 330px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: .76rem;
+      }
+
+      .pob-details {
+        padding: 10px;
+      }
+    }
+
+  </style>
 </head>
 
 <body>
@@ -1563,7 +1676,7 @@ header {
 
   <script>
     /* Apps Script 웹 앱 배포 URL로 변경 */
-    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyyLKR47nX0YJ_Vgob-AIbipjuPsFMvUYI9v6T7hrDFVB4cxV1crNwFqG4HhF8v2GR4_g/exec';
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxCjPDnKPL3h-BuziI4MgUC3p9HVWyEWbaAEtWZUWKcKYf9CTMbWeN20WFnFmOfYQ7u_w/exec';
 
     let WFS_APP_STARTED = false;
 
@@ -1916,6 +2029,222 @@ header {
     }
 
 
+    function getLegPobInfo(leg) {
+      const source =
+        leg && leg.pob && typeof leg.pob === 'object'
+          ? leg.pob
+          : {};
+
+      const crew =
+        Array.isArray(source.crew)
+          ? source.crew
+          : [];
+
+      const pax =
+        Array.isArray(source.pax)
+          ? source.pax
+          : [];
+
+      const pic =
+        crew.find(function (person) {
+          return /^PIC$/i.test(
+            String(person && person.role || '').trim()
+          );
+        });
+
+      return {
+        crewCount: Number(
+          source.crewCount != null
+            ? source.crewCount
+            : crew.length
+        ) || 0,
+
+        paxCount: Number(
+          source.paxCount != null
+            ? source.paxCount
+            : pax.length
+        ) || 0,
+
+        picName:
+          String(
+            source.picName ||
+            (pic && pic.name) ||
+            ''
+          ).trim(),
+
+        crew: crew,
+        pax: pax
+      };
+    }
+
+
+    function makePobElementId(leg) {
+      return String(
+        leg && leg.id
+          ? leg.id
+          : 'leg-' + String(leg && leg.legNo || '')
+      ).replace(/[^a-zA-Z0-9_-]/g, '');
+    }
+
+
+    function renderPobSummaryButton(leg) {
+      const pob = getLegPobInfo(leg);
+
+      if (!pob.crewCount && !pob.paxCount) {
+        return '';
+      }
+
+      const elementId = makePobElementId(leg);
+
+      const label =
+        '👤 Crew ' +
+        pob.crewCount +
+        ' · Pax ' +
+        pob.paxCount +
+        (
+          pob.picName
+            ? ' (PIC · ' + pob.picName + ')'
+            : ''
+        );
+
+      return (
+        '<button ' +
+          'class="pob-summary-button" ' +
+          'id="pobButton-' + esc(elementId) + '" ' +
+          'type="button" ' +
+          'title="' + esc(label) + '" ' +
+          'aria-expanded="false" ' +
+          'onclick="event.stopPropagation(); ' +
+            'togglePobDetails(\'' +
+              esc(elementId) +
+            '\')"' +
+        '>' +
+          esc(label) +
+        '</button>'
+      );
+    }
+
+
+    function renderPobRows(people) {
+      if (!Array.isArray(people) || !people.length) {
+        return (
+          '<tr>' +
+            '<td colspan="4" class="empty">' +
+              'No assigned personnel' +
+            '</td>' +
+          '</tr>'
+        );
+      }
+
+      return people.map(function (person) {
+        const name = String(person && person.name || '').trim();
+        const role = String(person && person.role || '').trim();
+        const expiry = String(
+          person && person.passportExpiry || ''
+        ).trim();
+
+        return (
+          '<tr>' +
+            '<td>' +
+              esc(name || '-') +
+              (
+                role && !/^passenger$/i.test(role)
+                  ? '<span class="pob-role">' +
+                      esc(role) +
+                    '</span>'
+                  : ''
+              ) +
+            '</td>' +
+            '<td>' +
+              esc(person && person.passportNumber || '-') +
+            '</td>' +
+            '<td class="' +
+              (person && person.isExpired === true
+                ? 'pob-expired'
+                : '') +
+            '">' +
+              esc(expiry || '-') +
+            '</td>' +
+            '<td>' +
+              esc(person && person.nationality || '-') +
+            '</td>' +
+          '</tr>'
+        );
+      }).join('');
+    }
+
+
+    function renderPobGroup(title, people) {
+      return (
+        '<section class="pob-group">' +
+          '<div class="pob-group-title">' +
+            esc(title) +
+          '</div>' +
+          '<div class="pob-table-wrap">' +
+            '<table class="pob-table">' +
+              '<thead>' +
+                '<tr>' +
+                  '<th>Name</th>' +
+                  '<th>Passport</th>' +
+                  '<th>Expiration Date</th>' +
+                  '<th>Nationality</th>' +
+                '</tr>' +
+              '</thead>' +
+              '<tbody>' +
+                renderPobRows(people) +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+
+    function renderPobDetails(leg) {
+      const pob = getLegPobInfo(leg);
+
+      if (!pob.crew.length && !pob.pax.length) {
+        return '';
+      }
+
+      const elementId = makePobElementId(leg);
+
+      return (
+        '<div ' +
+          'class="pob-details" ' +
+          'id="pobDetails-' + esc(elementId) + '">' +
+            renderPobGroup('Crew', pob.crew) +
+            renderPobGroup('Pax', pob.pax) +
+        '</div>'
+      );
+    }
+
+
+    function togglePobDetails(elementId) {
+      const panel = document.getElementById(
+        'pobDetails-' + elementId
+      );
+
+      const button = document.getElementById(
+        'pobButton-' + elementId
+      );
+
+      if (!panel || !button) {
+        return;
+      }
+
+      const willOpen =
+        !panel.classList.contains('open');
+
+      panel.classList.toggle('open', willOpen);
+      button.classList.toggle('open', willOpen);
+      button.setAttribute(
+        'aria-expanded',
+        willOpen ? 'true' : 'false'
+      );
+    }
+
+
     function renderLeg(leg) {
       const alerts = leg.annunciators || {};
 
@@ -1968,12 +2297,15 @@ header {
             </div>
 
             <div class="leg-summary-pills">
+              ${renderPobSummaryButton(leg)}
               ${countPill('CONFIRMED', visibleSummary.confirmed)}
               ${countPill('IN PROGRESS', visibleSummary.inProgress)}
               ${countPill('PENDING', visibleSummary.pending)}
               ${countPill('OWN', visibleSummary.own)}
             </div>
           </div>
+
+          ${renderPobDetails(leg)}
 
           ${(alerts.items || []).length ? `
             <div class="section">
