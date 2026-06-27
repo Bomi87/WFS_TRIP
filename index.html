@@ -1653,27 +1653,32 @@ header {
 
       .pob-table th:nth-child(1),
       .pob-table td:nth-child(1) {
-        width: 31%;
+        width: 24%;
       }
 
       .pob-table th:nth-child(2),
       .pob-table td:nth-child(2) {
-        width: 22%;
+        width: 18%;
       }
 
       .pob-table th:nth-child(3),
       .pob-table td:nth-child(3) {
-        width: 22%;
+        width: 18%;
       }
 
       .pob-table th:nth-child(4),
       .pob-table td:nth-child(4) {
-        width: 15%;
+        width: 13%;
       }
 
       .pob-table th:nth-child(5),
       .pob-table td:nth-child(5) {
-        width: 10%;
+        width: 19%;
+      }
+
+      .pob-table th:nth-child(6),
+      .pob-table td:nth-child(6) {
+        width: 8%;
         text-align: center;
       }
     }
@@ -1689,7 +1694,7 @@ header {
 
       .pob-table {
         width: max-content !important;
-        min-width: 840px !important;
+        min-width: 980px !important;
         table-layout: auto !important;
       }
 
@@ -1755,7 +1760,7 @@ header {
 
   <script>
     /* Apps Script 웹 앱 배포 URL로 변경 */
-    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbz6_6AD1xXbj8bWRlHlbW5i4mCie2bJ__4L6hhKzygP7byB2Mbv7x8kvv6aGPpEqwa9-A/exec';
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxsM0iKMVx5MBhKkwmQQzUuHpsjtGWLYfCGGELyRrx5xvznAFNeBdD398_dvPegdGtJFw/exec';
 
     let WFS_APP_STARTED = false;
 
@@ -2208,7 +2213,7 @@ header {
       if (!Array.isArray(people) || !people.length) {
         return (
           '<tr>' +
-            '<td colspan="5" class="empty">' +
+            '<td colspan="6" class="empty">' +
               'No assigned personnel' +
             '</td>' +
           '</tr>'
@@ -2248,6 +2253,9 @@ header {
               esc(person && person.nationality || '-') +
             '</td>' +
             '<td>' +
+              esc(person && person.dateOfBirth || '-') +
+            '</td>' +
+            '<td>' +
               esc(person && person.gender || '-') +
             '</td>' +
           '</tr>'
@@ -2270,6 +2278,7 @@ header {
                   '<th>Passport</th>' +
                   '<th>Expiration Date</th>' +
                   '<th>Nationality</th>' +
+                  '<th>Date of Birth</th>' +
                   '<th>Gender</th>' +
                 '</tr>' +
               '</thead>' +
