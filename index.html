@@ -2728,13 +2728,11 @@ header {
 
     (function waitForPortalAuth() {
       // 포털에서 이미 승인된 Gmail 계정 세션이면 앱 시작
-      if (sessionStorage.getItem('portalApproved') === 'true') {
-        startWfsAppAfterAuth();
-      }
+   
 
       // common-auth.js가 승인 계정임을 최종 확인한 경우에만 통과
       if (window.CURRENT_PORTAL_USER) {
-        sessionStorage.setItem('portalApproved', 'true');
+
         startWfsAppAfterAuth();
         return;
       }
