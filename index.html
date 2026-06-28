@@ -1771,8 +1771,8 @@ header {
     };
 
     // 백엔드는 30분마다 실제 데이터를 갱신합니다.
-    // 열려 있는 프론트는 1분마다 저장된 최신 스냅샷만 가볍게 확인합니다.
-    const FRONTEND_SNAPSHOT_CHECK_MS = 60 * 1000;
+    // 열려 있는 프론트는 5분마다 저장된 최신 스냅샷만 가볍게 확인합니다.
+   const FRONTEND_SNAPSHOT_CHECK_MS = 5 * 60 * 1000;
     let frontendSnapshotTimer = null;
 
     const el = {
