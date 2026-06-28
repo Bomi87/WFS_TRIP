@@ -1760,7 +1760,7 @@ header {
 
   <script>
     /* Apps Script 웹 앱 배포 URL로 변경 */
-    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxi8tG-PeQ0XVyAvbTFOgCTLN-qZkl6FTIO-IveN8roe2FS_XUachQXV5h4BPMsP1IojQ/exec';
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbx8CXhchOWb6_Mj0GJo1qWSy51ACHUzFZt-d1ZZlqqG1EAkU9wNooO0R_zIaNydcpoC5g/exec';
 
     let WFS_APP_STARTED = false;
 
@@ -1770,7 +1770,7 @@ header {
       loadingDashboard: false
     };
 
-    // 백엔드는 15분마다 실제 데이터를 갱신합니다.
+    // 백엔드는 30분마다 실제 데이터를 갱신합니다.
     // 열려 있는 프론트는 1분마다 저장된 최신 스냅샷만 가볍게 확인합니다.
     const FRONTEND_SNAPSHOT_CHECK_MS = 60 * 1000;
     let frontendSnapshotTimer = null;
@@ -1878,7 +1878,7 @@ header {
           action: 'dashboard',
           daysPast: '1',
           daysFuture: '90',
-          maxTrips: '10'
+          maxTrips: '5'
         }, 180000);
 
         if (!response || (!response.success && !response.partialSuccess)) {
