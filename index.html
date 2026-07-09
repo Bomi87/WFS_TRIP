@@ -1711,6 +1711,64 @@ header {
       }
     }
 
+
+    /* ===== FIX: 모바일에서도 Crew / PAX Manifest 표 형태 유지 ===== */
+    @media (max-width: 720px) {
+      .pob-table-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+
+      .pob-table {
+        display: table !important;
+        width: max-content !important;
+        min-width: 980px !important;
+        table-layout: auto !important;
+        border-collapse: collapse !important;
+      }
+
+      .pob-table thead {
+        display: table-header-group !important;
+      }
+
+      .pob-table tbody {
+        display: table-row-group !important;
+      }
+
+      .pob-table tr {
+        display: table-row !important;
+        width: auto !important;
+        padding: 0 !important;
+        border-bottom: 0 !important;
+      }
+
+      .pob-table th,
+      .pob-table td {
+        display: table-cell !important;
+        width: auto !important;
+        padding: 10px 11px !important;
+        border-bottom: 1px solid rgba(255,255,255,.075) !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+      }
+
+      .pob-table td::before {
+        content: none !important;
+        display: none !important;
+      }
+
+      .pob-table th:last-child,
+      .pob-table td:last-child {
+        width: 76px !important;
+        min-width: 76px !important;
+        text-align: center !important;
+      }
+    }
+
   </style>
 </head>
 
