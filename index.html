@@ -2132,8 +2132,8 @@ header {
     function getLegPobInfo(leg) {
       /*
        * WFS_TRIP backend normally returns leg.pob.
-       * The fallback keys below keep the UI compatible with older or test
-       * payloads without affecting existing Trip / service rendering.
+       * Re-split by crewPosition/role because WFS can mark passengers with
+       * crewPosition -1 even when they appear in the crew array.
        */
       const source =
         leg && leg.pob && typeof leg.pob === 'object'
@@ -2144,7 +2144,7 @@ header {
               ? leg.pobInfo
               : {};
 
-      const crew =
+      const rawCrew =
         Array.isArray(source.crew)
           ? source.crew
           : Array.isArray(source.crews)
@@ -2153,7 +2153,7 @@ header {
               ? leg.crew
               : [];
 
-      const pax =
+      const rawPax =
         Array.isArray(source.pax)
           ? source.pax
           : Array.isArray(source.passengers)
@@ -2164,26 +2164,104 @@ header {
                 ? leg.passengers
                 : [];
 
-      const pic =
-        crew.find(function (person) {
-          return /^PIC$/i.test(
-            String(person && person.role || '').trim()
+      function normalizePobPerson(person, fallbackGroup) {
+        person = person || {};
+
+        const rawRole = String(
+          person.role ||
+          person.crewPosition ||
+          person.defaultCrewPosition ||
+          ''
+        ).trim();
+
+        const roleNumber = Number(rawRole);
+        const hasNumericRole = rawRole !== '' && Number.isFinite(roleNumber);
+
+        // WFS crewPosition -1 means passenger.
+        const isPaxByRole = hasNumericRole && roleNumber < 0;
+        const isCrewByRole = hasNumericRole && roleNumber >= 0;
+
+        const isPax = isPaxByRole ||
+          person.isPax === true ||
+          fallbackGroup === 'pax';
+
+        const isCrew = !isPaxByRole && (
+          person.isCrew === true ||
+          isCrewByRole ||
+          fallbackGroup === 'crew'
+        );
+
+        let displayRole = rawRole;
+
+        if (hasNumericRole) {
+          if (isPaxByRole) {
+            displayRole = 'Passenger';
+          } else if (roleNumber === 1) {
+            displayRole = 'PIC';
+          } else {
+            displayRole = '';
+          }
+        }
+
+        // Generic labels are not useful beside every name.
+        if (/^(crew|passenger|pax)$/i.test(displayRole)) {
+          displayRole = '';
+        }
+
+        const sortOrder = Number(person.crewSortOrder);
+        const crewPositionSort = hasNumericRole && roleNumber >= 0
+          ? roleNumber
+          : Number.isFinite(sortOrder)
+            ? sortOrder
+            : /^PIC$/i.test(displayRole)
+              ? 1
+              : 9999;
+
+        return Object.assign({}, person, {
+          role: displayRole,
+          crewSortOrder: crewPositionSort,
+          isCrew: isCrew,
+          isPax: isPax
+        });
+      }
+
+      const people = [];
+
+      rawCrew.forEach(function (person) {
+        people.push(normalizePobPerson(person, 'crew'));
+      });
+
+      rawPax.forEach(function (person) {
+        people.push(normalizePobPerson(person, 'pax'));
+      });
+
+      const crew = people
+        .filter(function (person) {
+          return person.isCrew === true && person.isPax !== true;
+        })
+        .sort(function (a, b) {
+          const aOrder = Number(a && a.crewSortOrder);
+          const bOrder = Number(b && b.crewSortOrder);
+
+          return (
+            (Number.isFinite(aOrder) ? aOrder : 9999) -
+            (Number.isFinite(bOrder) ? bOrder : 9999)
           );
         });
 
-      const crewCount = Math.max(
-        Number(source.crewCount || 0),
-        crew.length
-      );
+      const pax = people.filter(function (person) {
+        return person.isPax === true || person.isCrew !== true;
+      });
 
-      const paxCount = Math.max(
-        Number(source.paxCount || source.passengerCount || 0),
-        pax.length
-      );
+      const pic = crew.find(function (person) {
+        return /^PIC$/i.test(
+          String(person && person.role || '').trim()
+        );
+      });
 
       return {
-        crewCount: crewCount,
-        paxCount: paxCount,
+        crewCount: crew.length,
+        paxCount: pax.length,
 
         picName:
           String(
