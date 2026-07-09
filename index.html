@@ -1905,22 +1905,32 @@ header {
           );
         }
 
-        const previousGeneratedAt =
-          state.response && state.response.generatedAtUtc
-            ? String(state.response.generatedAtUtc)
-            : '';
+    const previousGeneratedAt =
+  state.response && state.response.generatedAtUtc
+    ? String(state.response.generatedAtUtc)
+    : '';
 
-        const nextGeneratedAt =
-          response.generatedAtUtc
-            ? String(response.generatedAtUtc)
-            : '';
+const nextGeneratedAt =
+  response.generatedAtUtc
+    ? String(response.generatedAtUtc)
+    : '';
 
-        state.response = response;
-        state.trips = response.trips || [];
+if (
+  silent &&
+  previousGeneratedAt &&
+  nextGeneratedAt &&
+  previousGeneratedAt === nextGeneratedAt
+) {
+  updateLastUpdated(response);
+  return;
+}
 
-        updateLastUpdated(response);
-        updateAircraftFilter(state.trips);
-        applyLocalFilters();
+state.response = response;
+state.trips = response.trips || [];
+
+updateLastUpdated(response);
+updateAircraftFilter(state.trips);
+applyLocalFilters();
 
         if (
           silent &&
