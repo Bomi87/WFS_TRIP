@@ -1770,6 +1770,21 @@ header {
       loadingDashboard: false
     };
 
+    function shouldForceRefreshDashboard() {
+      try {
+        const params = new URLSearchParams(window.location.search || '');
+        const value = String(
+          params.get('forceRefresh') ||
+          params.get('refresh') ||
+          ''
+        ).trim();
+
+        return value === '1' || /^true$/i.test(value);
+      } catch (err) {
+        return false;
+      }
+    }
+
     // 백엔드는 30분마다 실제 데이터를 갱신합니다.
     // 열려 있는 프론트는 5분마다 저장된 최신 스냅샷만 가볍게 확인합니다.
    const FRONTEND_SNAPSHOT_CHECK_MS = 5 * 60 * 1000;
@@ -1878,7 +1893,8 @@ header {
           action: 'dashboard',
           daysPast: '1',
           daysFuture: '90',
-          maxTrips: '5'
+          maxTrips: '5',
+          forceRefresh: (!silent && shouldForceRefreshDashboard()) ? '1' : '0'
         }, 180000);
 
         if (!response || (!response.success && !response.partialSuccess)) {
@@ -2114,20 +2130,39 @@ header {
 
 
     function getLegPobInfo(leg) {
+      /*
+       * WFS_TRIP backend normally returns leg.pob.
+       * The fallback keys below keep the UI compatible with older or test
+       * payloads without affecting existing Trip / service rendering.
+       */
       const source =
         leg && leg.pob && typeof leg.pob === 'object'
           ? leg.pob
-          : {};
+          : leg && leg.manifest && typeof leg.manifest === 'object'
+            ? leg.manifest
+            : leg && leg.pobInfo && typeof leg.pobInfo === 'object'
+              ? leg.pobInfo
+              : {};
 
       const crew =
         Array.isArray(source.crew)
           ? source.crew
-          : [];
+          : Array.isArray(source.crews)
+            ? source.crews
+            : Array.isArray(leg && leg.crew)
+              ? leg.crew
+              : [];
 
       const pax =
         Array.isArray(source.pax)
           ? source.pax
-          : [];
+          : Array.isArray(source.passengers)
+            ? source.passengers
+            : Array.isArray(leg && leg.pax)
+              ? leg.pax
+              : Array.isArray(leg && leg.passengers)
+                ? leg.passengers
+                : [];
 
       const pic =
         crew.find(function (person) {
@@ -2136,18 +2171,19 @@ header {
           );
         });
 
-      return {
-        crewCount: Number(
-          source.crewCount != null
-            ? source.crewCount
-            : crew.length
-        ) || 0,
+      const crewCount = Math.max(
+        Number(source.crewCount || 0),
+        crew.length
+      );
 
-        paxCount: Number(
-          source.paxCount != null
-            ? source.paxCount
-            : pax.length
-        ) || 0,
+      const paxCount = Math.max(
+        Number(source.paxCount || source.passengerCount || 0),
+        pax.length
+      );
+
+      return {
+        crewCount: crewCount,
+        paxCount: paxCount,
 
         picName:
           String(
@@ -2232,9 +2268,9 @@ header {
             '<td>' +
               esc(name || '-') +
               (
-                /^pic$/i.test(role)
+                role
                   ? '<span class="pob-role">' +
-                      'PIC' +
+                      esc(role) +
                     '</span>'
                   : ''
               ) +
@@ -2295,7 +2331,12 @@ header {
     function renderPobDetails(leg) {
       const pob = getLegPobInfo(leg);
 
-      if (!pob.crew.length && !pob.pax.length) {
+      if (
+        !pob.crew.length &&
+        !pob.pax.length &&
+        !pob.crewCount &&
+        !pob.paxCount
+      ) {
         return '';
       }
 
