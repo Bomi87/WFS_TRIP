@@ -1915,11 +1915,15 @@ const nextGeneratedAt =
     ? String(response.generatedAtUtc)
     : '';
 
+const previousTripsKey = JSON.stringify(state.trips || []);
+const nextTripsKey = JSON.stringify(response.trips || []);
+
+// 자동 갱신인데 실제 Trip 데이터가 같으면 화면을 다시 그리지 않음
 if (
   silent &&
-  previousGeneratedAt &&
-  nextGeneratedAt &&
-  previousGeneratedAt === nextGeneratedAt
+  previousTripsKey &&
+  nextTripsKey &&
+  previousTripsKey === nextTripsKey
 ) {
   updateLastUpdated(response);
   return;
