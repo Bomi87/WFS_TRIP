@@ -1994,13 +1994,16 @@ header {
       }
 
       try {
-        const response = await jsonp(BACKEND_URL, {
-          action: 'dashboard',
-          daysPast: '1',
-          daysFuture: '90',
-          maxTrips: '5',
-          forceRefresh: (!silent && shouldForceRefreshDashboard()) ? '1' : '0'
-        }, 180000);
+  const response = await jsonp(BACKEND_URL, {
+  action: 'dashboard',
+  daysPast: '90',
+  daysFuture: '90',
+  maxTrips: '20',
+  forceRefresh:
+    (!silent && shouldForceRefreshDashboard())
+      ? '1'
+      : '0'
+}, 180000);
 
         if (!response || (!response.success && !response.partialSuccess)) {
           throw new Error(
@@ -2079,19 +2082,48 @@ applyLocalFilters();
     }
 
 
-    function applyLocalFilters() {
-      const aircraft = el.aircraftFilter.value.trim().toUpperCase();
+   function applyLocalFilters() {
+  const aircraft = el.aircraftFilter.value
+    .trim()
+    .toUpperCase();
 
-      const filtered = state.trips.filter(function (trip) {
-        return !aircraft ||
-          String(trip.aircraftRegistry || '')
-            .trim()
-            .toUpperCase() === aircraft;
-      });
+  const todayKstText = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
 
-      renderTrips(filtered);
+  const filtered = state.trips.filter(function (trip) {
+    const aircraftMatches =
+      !aircraft ||
+      String(trip.aircraftRegistry || '')
+        .trim()
+        .toUpperCase() === aircraft;
+
+    if (!aircraftMatches) {
+      return false;
     }
 
+    const endValue =
+      trip.endLocal ||
+      trip.endUtc ||
+      trip.end ||
+      trip.to;
+
+    // 종료일 정보가 없으면 일단 표시
+    if (!endValue) {
+      return true;
+    }
+
+    const tripEndDate = formatDateOnly(endValue);
+
+    // 오늘이 TO 날짜 이하이면 표시
+    return tripEndDate >= todayKstText;
+  });
+
+  renderTrips(filtered);
+}
 
     function updateAircraftFilter(trips) {
       const current = el.aircraftFilter.value;
