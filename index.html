@@ -1994,11 +1994,11 @@ header {
       }
 
       try {
-  const response = await jsonp(BACKEND_URL, {
+const response = await jsonp(BACKEND_URL, {
   action: 'dashboard',
-  daysPast: '90',
+  daysPast: '30',
   daysFuture: '90',
-  maxTrips: '20',
+  maxTrips: '5',
   forceRefresh:
     (!silent && shouldForceRefreshDashboard())
       ? '1'
