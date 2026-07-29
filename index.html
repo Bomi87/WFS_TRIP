@@ -2132,39 +2132,18 @@ applyLocalFilters();
     .trim()
     .toUpperCase();
 
-  const todayKstText = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date());
-
+  /*
+   * Trip 종료 여부는 백엔드가 모든 leg의 실제 최종 도착시각으로 이미 판단합니다.
+   * 프론트에서 endLocal을 다시 비교하면 legs 배열 순서/현지 날짜 차이 때문에
+   * 진행 중 Trip을 잘못 숨길 수 있으므로 항공기 필터만 적용합니다.
+   */
   const filtered = state.trips.filter(function (trip) {
-    const aircraftMatches =
+    return (
       !aircraft ||
       String(trip.aircraftRegistry || '')
         .trim()
-        .toUpperCase() === aircraft;
-
-    if (!aircraftMatches) {
-      return false;
-    }
-
-    const endValue =
-      trip.endLocal ||
-      trip.endUtc ||
-      trip.end ||
-      trip.to;
-
-    // 종료일 정보가 없으면 일단 표시
-    if (!endValue) {
-      return true;
-    }
-
-    const tripEndDate = formatDateOnly(endValue);
-
-    // 오늘이 TO 날짜 이하이면 표시
-    return tripEndDate >= todayKstText;
+        .toUpperCase() === aircraft
+    );
   });
 
   renderTrips(filtered);
