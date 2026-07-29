@@ -355,6 +355,14 @@
     .alert-desc, .service-name { min-width: 0; font-size: 12px; font-weight: 750; word-break: break-word; }
     .status { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 900; white-space: nowrap; letter-spacing: .04em; }
     .note { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .service-note-text {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
     .required { margin-left: 5px; color: #efa5f8; font-size: 8px; font-weight: 900; }
 
     .child-list {
@@ -2771,12 +2779,13 @@ applyLocalFilters();
         normalizedNotes === (String(service.name || '').toUpperCase() + ': ' + String(service.status || '').toUpperCase()) ||
         normalizedNotes === (String(service.name || '').toUpperCase() + ' ' + String(service.status || '').toUpperCase());
 
-      const details = [
+      const metaDetails = [
         service.hotelName ? 'Hotel: ' + service.hotelName : '',
         service.confirmedBy ? 'Confirmed by ' + service.confirmedBy : '',
-        service.confirmedAtUtc ? formatUtc(service.confirmedAtUtc) : '',
-        rawNotes && !redundantStatusNote ? rawNotes : ''
+        service.confirmedAtUtc ? formatUtc(service.confirmedAtUtc) : ''
       ].filter(Boolean).join(' · ');
+
+      const notesText = rawNotes && !redundantStatusNote ? rawNotes : '';
 
       return `
         <div class="service-row">
@@ -2787,7 +2796,8 @@ applyLocalFilters();
             </div>
             ${statusPill(service.status, true)}
           </div>
-          ${details ? '<div class="note">' + esc(details) + '</div>' : ''}
+          ${metaDetails ? '<div class="note">' + esc(metaDetails) + '</div>' : ''}
+          ${notesText ? '<div class="service-note-text">' + esc(notesText) + '</div>' : ''}
           ${(service.children || []).length ? `
             <div class="child-list">
               ${service.children.map(function (child) {
