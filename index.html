@@ -1875,25 +1875,15 @@ header {
       loadingDashboard: false
     };
 
-    function shouldForceRefreshDashboard() {
-      try {
-        const params = new URLSearchParams(window.location.search || '');
-        const value = String(
-          params.get('forceRefresh') ||
-          params.get('refresh') ||
-          ''
-        ).trim();
+    // 백엔드는 30분마다 실제 WFS 데이터를 갱신합니다.
+    // 프론트는 캐시만 읽으며, Apps Script 호출량을 줄이기 위해 10분마다 확인합니다.
+    const FRONTEND_SNAPSHOT_CHECK_MS = 10 * 60 * 1000;
+    const FRONTEND_VISIBLE_RECHECK_MIN_MS = 5 * 60 * 1000;
+    const FRONTEND_LOADING_RETRY_DEFAULT_MS = 45 * 1000;
 
-        return value === '1' || /^true$/i.test(value);
-      } catch (err) {
-        return false;
-      }
-    }
-
-    // 백엔드는 30분마다 실제 데이터를 갱신합니다.
-    // 열려 있는 프론트는 5분마다 저장된 최신 스냅샷만 가볍게 확인합니다.
-   const FRONTEND_SNAPSHOT_CHECK_MS = 5 * 60 * 1000;
     let frontendSnapshotTimer = null;
+    let frontendLoadingRetryTimer = null;
+    let lastDashboardRequestAt = 0;
 
     const el = {
       lastUpdated: document.getElementById('lastUpdated'),
@@ -1957,9 +1947,12 @@ header {
         closeOpenTripDetails();
       });
 
-      // PDF를 열었다가 돌아오거나 백그라운드 탭이 다시 보이면 즉시 최신 스냅샷 확인
+      // 백그라운드 탭에서 돌아와도 최근 확인 후 5분이 지나지 않았으면 재호출하지 않습니다.
       document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible') {
+        if (
+          document.visibilityState === 'visible' &&
+          Date.now() - lastDashboardRequestAt >= FRONTEND_VISIBLE_RECHECK_MIN_MS
+        ) {
           loadDashboard(true);
         }
       });
@@ -1988,22 +1981,40 @@ header {
       }
 
       state.loadingDashboard = true;
+      lastDashboardRequestAt = Date.now();
 
       if (!silent) {
         setLoading(true);
       }
 
       try {
-const response = await jsonp(BACKEND_URL, {
-  action: 'dashboard',
-  daysPast: '30',
-  daysFuture: '90',
-  maxTrips: '5',
-  forceRefresh:
-    (!silent && shouldForceRefreshDashboard())
-      ? '1'
-      : '0'
-}, 180000);
+        const response = await jsonp(BACKEND_URL, {
+          action: 'dashboard',
+          daysFuture: '90',
+          maxTrips: '5'
+        }, 30000);
+
+        // 최초 캐시 생성 또는 정기 갱신 중에는 오류로 처리하지 않고 한 번만 재확인합니다.
+        if (response && response.loading) {
+          const retrySeconds = Math.max(
+            30,
+            Number(response.retryAfterSeconds || 45)
+          );
+
+          scheduleDashboardLoadingRetry_(retrySeconds * 1000);
+
+          if (!state.trips.length) {
+            renderEmpty(
+              response.message ||
+              'WFS 데이터를 준비 중입니다. 잠시 후 자동으로 다시 확인합니다.'
+            );
+          }
+
+          updateLoadingStatus_(response.message || 'WFS 데이터를 준비 중입니다.');
+          return;
+        }
+
+        clearDashboardLoadingRetry_();
 
         if (!response || (!response.success && !response.partialSuccess)) {
           throw new Error(
@@ -2078,6 +2089,40 @@ applyLocalFilters();
         if (!silent) {
           setLoading(false);
         }
+      }
+    }
+
+
+    function scheduleDashboardLoadingRetry_(delayMs) {
+      clearDashboardLoadingRetry_();
+
+      frontendLoadingRetryTimer = window.setTimeout(function () {
+        frontendLoadingRetryTimer = null;
+
+        if (document.visibilityState === 'visible') {
+          loadDashboard(true);
+        }
+      }, Math.max(FRONTEND_LOADING_RETRY_DEFAULT_MS, Number(delayMs || 0)));
+    }
+
+
+    function clearDashboardLoadingRetry_() {
+      if (frontendLoadingRetryTimer) {
+        window.clearTimeout(frontendLoadingRetryTimer);
+        frontendLoadingRetryTimer = null;
+      }
+    }
+
+
+    function updateLoadingStatus_(message) {
+      if (!el.loading) return;
+
+      const textNode = Array.from(el.loading.childNodes).find(function (node) {
+        return node.nodeType === Node.TEXT_NODE && String(node.textContent || '').trim();
+      });
+
+      if (textNode) {
+        textNode.textContent = '\n      ' + String(message || 'WFS 데이터를 준비 중입니다.') + '\n    ';
       }
     }
 
