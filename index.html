@@ -309,12 +309,37 @@
       padding-top: 1px;
     }
 
-    /* ===== LEG 상세영역: Route 버튼으로 Trip 상세와 함께 열고 닫음 ===== */
+    /* ===== LEG 상세영역: 처음에는 닫힘 / 상태 버튼으로 열고 닫음 ===== */
     .leg-detail-content {
+      display: none;
+    }
+
+    .leg-card.leg-open .leg-detail-content {
       display: block;
     }
 
-    /* 상태 Pill은 버튼이 아닌 기존 표시용 스타일 유지 */
+    /* 상태 Pill은 기존 색상을 유지한 클릭 버튼 */
+    .leg-status-toggle {
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .leg-status-toggle:focus-visible {
+      outline: 2px solid rgba(72, 209, 234, .72);
+      outline-offset: 2px;
+    }
+
+    .leg-status-toggle:hover {
+      filter: brightness(1.12);
+    }
+
+    .leg-status-toggle[aria-expanded="true"] {
+      box-shadow: 0 0 0 2px rgba(72, 209, 234, .18);
+    }
+
+    /* 상태 Pill의 기존 표시 색상 유지 */
     .leg-summary-pills .s-confirmed {
       color: #78e7b5 !important;
       border-color: rgba(57, 202, 140, .38) !important;
@@ -1955,6 +1980,24 @@ header {
       el.aircraftFilter.addEventListener('change', applyLocalFilters);
 
       el.tripList.addEventListener('click', function (event) {
+        const statusButton = event.target.closest('.leg-status-toggle');
+
+        if (statusButton) {
+          event.stopPropagation();
+
+          const legCard = statusButton.closest('.leg-card');
+          if (!legCard) return;
+
+          const willOpen = !legCard.classList.contains('leg-open');
+          legCard.classList.toggle('leg-open', willOpen);
+
+          legCard.querySelectorAll('.leg-status-toggle').forEach(function (button) {
+            button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+          });
+
+          return;
+        }
+
         const button = event.target.closest('.route-btn');
         if (!button) return;
 
@@ -2846,7 +2889,7 @@ applyLocalFilters();
 
     function countPill(status, count) {
       if (!count) return '';
-      return `<span class="pill ${statusClass(status)}"><span class="dot"></span>${esc(statusLabel(status))} ${count}</span>`;
+      return `<button type="button" class="pill leg-status-toggle ${statusClass(status)}" aria-expanded="false"><span class="dot"></span>${esc(statusLabel(status))} ${count}</button>`;
     }
 
 
