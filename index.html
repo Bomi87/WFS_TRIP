@@ -309,25 +309,30 @@
       padding-top: 1px;
     }
 
-    /* ===== LEG 상세영역: 상태 버튼 클릭 시에만 펼침 ===== */
+    /* ===== LEG 상세영역: Route 버튼으로 Trip 상세와 함께 열고 닫음 ===== */
     .leg-detail-content {
-      display: none;
-    }
-
-    .leg-card.open .leg-detail-content {
       display: block;
     }
 
-    .leg-summary-toggle {
-      appearance: none;
-      font: inherit;
-      cursor: pointer;
+    /* 상태 Pill은 버튼이 아닌 기존 표시용 스타일 유지 */
+    .leg-summary-pills .s-confirmed {
+      color: #78e7b5 !important;
+      border-color: rgba(57, 202, 140, .38) !important;
+      background: rgba(57, 202, 140, .10) !important;
     }
 
-    .leg-summary-toggle:hover,
-    .leg-summary-toggle[aria-expanded="true"] {
-      filter: brightness(1.16);
-      border-color: currentColor !important;
+    .leg-summary-pills .s-confirmed .dot {
+      background: #39ca8c !important;
+    }
+
+    .leg-summary-pills .s-own {
+      color: #d4dee8 !important;
+      border-color: rgba(148, 163, 184, .38) !important;
+      background: rgba(148, 163, 184, .13) !important;
+    }
+
+    .leg-summary-pills .s-own .dot {
+      background: #9aaabd !important;
     }
 
     .section {
@@ -1969,13 +1974,6 @@ header {
         }
       });
 
-      document.addEventListener('click', function (event) {
-        if (event.target.closest('.trip-detail-row')) return;
-        if (event.target.closest('.route-btn')) return;
-
-        closeOpenTripDetails();
-      });
-
       // 백그라운드 탭에서 돌아와도 최근 확인 후 5분이 지나지 않았으면 재호출하지 않습니다.
       document.addEventListener('visibilitychange', function () {
         if (
@@ -2660,19 +2658,6 @@ applyLocalFilters();
     }
 
 
-    function toggleLegDetails(elementId, button) {
-      const legCard = document.getElementById('legCard-' + elementId);
-      if (!legCard) return;
-
-      const willOpen = !legCard.classList.contains('open');
-      legCard.classList.toggle('open', willOpen);
-
-      legCard.querySelectorAll('.leg-summary-toggle').forEach(function (item) {
-        item.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      });
-    }
-
-
     function renderLeg(leg) {
       const alerts = leg.annunciators || {};
 
@@ -2728,10 +2713,10 @@ applyLocalFilters();
 
             <div class="leg-summary-pills">
               ${renderPobSummaryButton(leg)}
-              ${countPill('CONFIRMED', visibleSummary.confirmed, elementId)}
-              ${countPill('IN PROGRESS', visibleSummary.inProgress, elementId)}
-              ${countPill('PENDING', visibleSummary.pending, elementId)}
-              ${countPill('OWN', visibleSummary.own, elementId)}
+              ${countPill('CONFIRMED', visibleSummary.confirmed)}
+              ${countPill('IN PROGRESS', visibleSummary.inProgress)}
+              ${countPill('PENDING', visibleSummary.pending)}
+              ${countPill('OWN', visibleSummary.own)}
             </div>
           </div>
 
@@ -2859,23 +2844,9 @@ applyLocalFilters();
     }
 
 
-    function countPill(status, count, elementId) {
+    function countPill(status, count) {
       if (!count) return '';
-
-      return (
-        '<button ' +
-          'type="button" ' +
-          'class="pill leg-summary-toggle ' + statusClass(status) + '" ' +
-          'aria-controls="legDetails-' + esc(elementId) + '" ' +
-          'aria-expanded="false" ' +
-          'onclick="event.stopPropagation(); toggleLegDetails(\'' +
-            esc(elementId) +
-          '\', this)"' +
-        '>' +
-          '<span class="dot"></span>' +
-          esc(statusLabel(status)) + ' ' + count +
-        '</button>'
-      );
+      return `<span class="pill ${statusClass(status)}"><span class="dot"></span>${esc(statusLabel(status))} ${count}</span>`;
     }
 
 
