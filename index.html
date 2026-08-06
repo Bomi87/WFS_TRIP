@@ -309,6 +309,27 @@
       padding-top: 1px;
     }
 
+    /* ===== LEG 상세영역: 상태 버튼 클릭 시에만 펼침 ===== */
+    .leg-detail-content {
+      display: none;
+    }
+
+    .leg-card.open .leg-detail-content {
+      display: block;
+    }
+
+    .leg-summary-toggle {
+      appearance: none;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .leg-summary-toggle:hover,
+    .leg-summary-toggle[aria-expanded="true"] {
+      filter: brightness(1.16);
+      border-color: currentColor !important;
+    }
+
     .section {
       padding: 12px 13px;
       border-bottom: 1px solid var(--line);
@@ -2639,6 +2660,19 @@ applyLocalFilters();
     }
 
 
+    function toggleLegDetails(elementId, button) {
+      const legCard = document.getElementById('legCard-' + elementId);
+      if (!legCard) return;
+
+      const willOpen = !legCard.classList.contains('open');
+      legCard.classList.toggle('open', willOpen);
+
+      legCard.querySelectorAll('.leg-summary-toggle').forEach(function (item) {
+        item.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+    }
+
+
     function renderLeg(leg) {
       const alerts = leg.annunciators || {};
 
@@ -2668,8 +2702,10 @@ applyLocalFilters();
         requiredNoStatus: 0
       });
 
+      const elementId = makePobElementId(leg);
+
       return `
-        <section class="leg-card">
+        <section class="leg-card" id="legCard-${esc(elementId)}">
           <div class="leg-head">
             <div class="leg-schedule-wrap">
               <div class="leg-route">
@@ -2692,13 +2728,14 @@ applyLocalFilters();
 
             <div class="leg-summary-pills">
               ${renderPobSummaryButton(leg)}
-              ${countPill('CONFIRMED', visibleSummary.confirmed)}
-              ${countPill('IN PROGRESS', visibleSummary.inProgress)}
-              ${countPill('PENDING', visibleSummary.pending)}
-              ${countPill('OWN', visibleSummary.own)}
+              ${countPill('CONFIRMED', visibleSummary.confirmed, elementId)}
+              ${countPill('IN PROGRESS', visibleSummary.inProgress, elementId)}
+              ${countPill('PENDING', visibleSummary.pending, elementId)}
+              ${countPill('OWN', visibleSummary.own, elementId)}
             </div>
           </div>
 
+          <div class="leg-detail-content" id="legDetails-${esc(elementId)}">
           ${renderPobDetails(leg)}
 
           ${(alerts.items || []).length ? `
@@ -2723,6 +2760,7 @@ applyLocalFilters();
               ${renderStation(enr, 'ENROUTE')}
             </div>
           ` : ''}
+          </div>
         </section>
       `;
     }
@@ -2821,9 +2859,23 @@ applyLocalFilters();
     }
 
 
-    function countPill(status, count) {
+    function countPill(status, count, elementId) {
       if (!count) return '';
-      return `<span class="pill ${statusClass(status)}"><span class="dot"></span>${esc(statusLabel(status))} ${count}</span>`;
+
+      return (
+        '<button ' +
+          'type="button" ' +
+          'class="pill leg-summary-toggle ' + statusClass(status) + '" ' +
+          'aria-controls="legDetails-' + esc(elementId) + '" ' +
+          'aria-expanded="false" ' +
+          'onclick="event.stopPropagation(); toggleLegDetails(\'' +
+            esc(elementId) +
+          '\', this)"' +
+        '>' +
+          '<span class="dot"></span>' +
+          esc(statusLabel(status)) + ' ' + count +
+        '</button>'
+      );
     }
 
 
