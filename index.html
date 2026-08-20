@@ -540,6 +540,20 @@
       gap: 10px;
     }
 
+    .trip-route-summary {
+      display: block;
+      max-width: 300px;
+      color: #c4ced9;
+      font-weight: 600;
+      line-height: 1.32;
+      overflow-wrap: normal;
+      word-break: keep-all;
+    }
+
+    .trip-route-summary.route-lines-1 { font-size: .92rem; white-space: nowrap; }
+    .trip-route-summary.route-lines-2 { max-width: 270px; font-size: .78rem; }
+    .trip-route-summary.route-lines-3 { max-width: 290px; font-size: .68rem; line-height: 1.25; }
+
     .route-btn {
       border: 0;
       border-radius: 9px;
@@ -554,6 +568,14 @@
     .route-btn:hover {
       background: rgba(67, 151, 255, .28);
     }
+
+    /* 같은 항공기는 항상 같은 색상 조합을 사용합니다. */
+    .route-btn.aircraft-theme-0 { background: rgba(47,139,253,.22); color: #9dccff; border: 1px solid rgba(86,163,255,.32); }
+    .route-btn.aircraft-theme-1 { background: rgba(24,190,157,.18); color: #70e4ca; border: 1px solid rgba(58,211,180,.30); }
+    .route-btn.aircraft-theme-2 { background: rgba(177,103,234,.19); color: #d9a8ff; border: 1px solid rgba(202,132,255,.30); }
+    .route-btn.aircraft-theme-3 { background: rgba(238,142,54,.18); color: #ffc07c; border: 1px solid rgba(247,166,86,.31); }
+    .route-btn.aircraft-theme-4 { background: rgba(231,83,125,.17); color: #ff9db9; border: 1px solid rgba(244,112,151,.30); }
+    .route-btn[class*="aircraft-theme-"]:hover { filter: brightness(1.18); }
 
     .trip-detail-row {
       display: none;
@@ -637,6 +659,12 @@
       .trip-number-cell {
         width: 100%;
         justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .trip-route-summary {
+        max-width: min(68vw, 320px) !important;
+        text-align: right;
       }
 
       .trip-detail-row {
@@ -2311,6 +2339,9 @@ applyLocalFilters();
       const detailId = 'tripDetail_' + index + '_' + String(trip.tripId || '').replace(/[^a-zA-Z0-9]/g, '');
       const startDate = formatDateOnly(trip.startLocal || trip.startUtc);
       const endDate = formatDateOnly(trip.endLocal || trip.endUtc);
+      const routeSummary = getTripRouteSummary(trip);
+      const routeLineClass = getTripRouteLineClass(routeSummary);
+      const aircraftTheme = getAircraftThemeClass(trip.aircraftRegistry);
 
       return `
         <tr class="trip-row">
@@ -2318,11 +2349,12 @@ applyLocalFilters();
             <div class="trip-number-cell">
             <strong>#${esc(title)}</strong>
               <button
-                class="route-btn"
+                class="route-btn ${aircraftTheme}"
                 type="button"
                 data-detail-id="${esc(detailId)}"
                 aria-expanded="false"
               >ROUTE</button>
+              <span class="trip-route-summary ${routeLineClass}">${esc(routeSummary)}</span>
             </div>
           </td>
           <td data-label="A/C"><strong>${esc(trip.aircraftRegistry || 'N/A')}</strong></td>
@@ -2352,6 +2384,47 @@ applyLocalFilters();
           </td>
         </tr>
       `;
+    }
+
+
+    function getTripRouteSummary(trip) {
+      const legs = Array.isArray(trip && trip.legs) ? trip.legs : [];
+      const airports = [];
+
+      legs.forEach(function (leg, index) {
+        const from = String(leg && leg.from || '').trim().toUpperCase();
+        const to = String(leg && leg.to || '').trim().toUpperCase();
+
+        if (index === 0 && from) airports.push(from);
+        if (to && airports[airports.length - 1] !== to) airports.push(to);
+      });
+
+      if (airports.length) return airports.join(' → ');
+
+      return String(trip && trip.route || 'Route 없음')
+        .replace(/\s*(?:-|>|→)\s*/g, ' → ');
+    }
+
+
+    function getTripRouteLineClass(routeSummary) {
+      const stopCount = String(routeSummary || '').split('→').length;
+      const length = String(routeSummary || '').length;
+
+      if (stopCount <= 3 && length <= 22) return 'route-lines-1';
+      if (stopCount <= 6 && length <= 50) return 'route-lines-2';
+      return 'route-lines-3';
+    }
+
+
+    function getAircraftThemeClass(aircraftRegistry) {
+      const key = String(aircraftRegistry || 'UNKNOWN').trim().toUpperCase();
+      let hash = 0;
+
+      for (let i = 0; i < key.length; i += 1) {
+        hash = ((hash * 31) + key.charCodeAt(i)) >>> 0;
+      }
+
+      return 'aircraft-theme-' + (hash % 5);
     }
 
 
