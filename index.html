@@ -955,6 +955,24 @@
       font-size: .78rem;
       font-weight: 900;
       letter-spacing: .12em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .trip-detail-aircraft {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(57, 202, 140, .14);
+      border: 1px solid rgba(57, 202, 140, .32);
+      color: #78e7b5;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .04em;
     }
 
     .trip-detail-inner {
@@ -2367,7 +2385,12 @@ applyLocalFilters();
         <tr class="trip-detail-row" id="${esc(detailId)}">
           <td colspan="6">
             <div class="trip-detail-shell">
-              <div class="trip-detail-label">TRIP DETAIL</div>
+              <div class="trip-detail-label">
+                <span>TRIP DETAIL</span>
+                ${trip.aircraftRegistry
+                  ? '<span class="trip-detail-aircraft">' + esc(trip.aircraftRegistry) + '</span>'
+                  : ''}
+              </div>
 
               <div class="trip-detail-inner">
                 <div class="trip-detail-top">
