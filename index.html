@@ -405,12 +405,19 @@
     }
     .alert-desc, .service-name { min-width: 0; font-size: 12px; font-weight: 750; word-break: break-word; }
     .status { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 900; white-space: nowrap; letter-spacing: .04em; }
-    .note { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.45; }
-    .service-note-text {
-      margin-top: 8px;
+    /* 모든 서비스 Detail / Note 글자 크기를 동일하게 통일 */
+    .note {
+      margin-top: 5px;
       color: var(--muted);
-      font-size: 10px;
-      line-height: 1.55;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .service-note-text {
+      margin-top: 6px;
+      color: #c9d8e6;
+      font-size: 11px;
+      line-height: 1.5;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
@@ -426,25 +433,13 @@
     .child-row { padding-left: 10px; color: #c6d6e4; font-size: 10px; }
 
     /* Child Service의 Confirmed by / Confirmed Date / Notes 표시 */
-    .child-service-meta,
     .child-service-note {
       grid-column: 1 / -1;
       min-width: 0;
-    }
-
-    .child-service-meta {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: .78rem;
-      line-height: 1.45;
-      font-weight: 400 !important;
-    }
-
-    .child-service-note {
-      margin-top: 5px;
+      margin-top: 6px;
       color: #c9d8e6;
-      font-size: .88rem;
-      line-height: 1.55;
+      font-size: 11px;
+      line-height: 1.5;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       font-weight: 400 !important;
@@ -3003,6 +2998,29 @@ applyLocalFilters();
     }
 
 
+    function hasMeaningfulServiceNote(value) {
+      const text = String(value || '').trim();
+
+      if (!text) {
+        return false;
+      }
+
+      const compact = text
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      /* WFS에서 Note가 비어 있을 때 사용하는 placeholder는 표시하지 않습니다. */
+      if (
+        /^(?:-|--|---|N\/?A|NA|NONE|NULL|NO\s+NOTE|NO\s+NOTES|NO\s+REMARK|NO\s+REMARKS)$/.test(compact)
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+
     function renderService(service) {
       const name = service.confirmationNumber
         ? service.name + ' (' + service.confirmationNumber + ')'
@@ -3014,13 +3032,11 @@ applyLocalFilters();
         normalizedNotes === (String(service.name || '').toUpperCase() + ': ' + String(service.status || '').toUpperCase()) ||
         normalizedNotes === (String(service.name || '').toUpperCase() + ' ' + String(service.status || '').toUpperCase());
 
-      const metaDetails = [
-        service.hotelName ? 'Hotel: ' + service.hotelName : '',
-        service.confirmedBy ? 'Confirmed by ' + service.confirmedBy : '',
-        service.confirmedAtUtc ? formatUtc(service.confirmedAtUtc) : ''
-      ].filter(Boolean).join(' · ');
-
-      const notesText = rawNotes && !redundantStatusNote ? rawNotes : '';
+      const notesText =
+        hasMeaningfulServiceNote(rawNotes) &&
+        !redundantStatusNote
+          ? rawNotes
+          : '';
 
       return `
         <div class="service-row">
@@ -3031,7 +3047,6 @@ applyLocalFilters();
             </div>
             ${statusPill(service.status, true)}
           </div>
-          ${metaDetails ? '<div class="note">' + esc(metaDetails) + '</div>' : ''}
           ${notesText ? '<div class="service-note-text">' + esc(notesText) + '</div>' : ''}
           ${(service.children || []).length ? `
             <div class="child-list">
@@ -3049,28 +3064,15 @@ applyLocalFilters();
                      String(child.status || '').toUpperCase());
 
                 const childNotesText =
-                  childRawComment && !childRedundantStatusNote
+                  hasMeaningfulServiceNote(childRawComment) &&
+                  !childRedundantStatusNote
                     ? childRawComment
                     : '';
-
-                const childMetaDetails = [
-                  child.confirmedBy
-                    ? 'Confirmed by ' + child.confirmedBy
-                    : '',
-                  child.confirmedAtUtc
-                    ? formatUtc(child.confirmedAtUtc)
-                    : ''
-                ].filter(Boolean).join(' · ');
 
                 return `
                   <div class="child-row">
                     <span>${esc(child.name)}</span>
                     ${statusPill(child.status, true)}
-                    ${childMetaDetails
-                      ? '<div class="child-service-meta">' +
-                          esc(childMetaDetails) +
-                        '</div>'
-                      : ''}
                     ${childNotesText
                       ? '<div class="child-service-note">' +
                           esc(childNotesText) +
