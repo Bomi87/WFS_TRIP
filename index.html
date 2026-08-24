@@ -425,6 +425,31 @@
     }
     .child-row { padding-left: 10px; color: #c6d6e4; font-size: 10px; }
 
+    /* Child Service의 Confirmed by / Confirmed Date / Notes 표시 */
+    .child-service-meta,
+    .child-service-note {
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+
+    .child-service-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+      font-weight: 400 !important;
+    }
+
+    .child-service-note {
+      margin-top: 5px;
+      color: #c9d8e6;
+      font-size: .88rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-weight: 400 !important;
+    }
+
     .station-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .station { padding: 12px 13px; min-width: 0; }
     .station + .station { border-left: 1px solid var(--line); }
@@ -2062,6 +2087,20 @@ header {
           const legCard = statusButton.closest('.leg-card');
           if (!legCard) return;
 
+          /*
+           * CONFIRMED / PENDING / OWN 중 하나를 누르면
+           * 열려 있던 CREW / PAX Manifest를 먼저 닫고
+           * Handling Status 상세영역을 표시합니다.
+           */
+          legCard.querySelectorAll('.pob-details.open').forEach(function (panel) {
+            panel.classList.remove('open');
+          });
+
+          legCard.querySelectorAll('.pob-summary-button.open').forEach(function (button) {
+            button.classList.remove('open');
+            button.setAttribute('aria-expanded', 'false');
+          });
+
           const willOpen = !legCard.classList.contains('leg-open');
           legCard.classList.toggle('leg-open', willOpen);
 
@@ -2997,10 +3036,46 @@ applyLocalFilters();
           ${(service.children || []).length ? `
             <div class="child-list">
               ${service.children.map(function (child) {
+                const childRawComment = String(child.comment || '').trim();
+                const childNormalizedComment =
+                  childRawComment.toUpperCase().replace(/\s+/g, ' ');
+
+                const childRedundantStatusNote =
+                  childNormalizedComment ===
+                    (String(child.name || '').toUpperCase() + ': ' +
+                     String(child.status || '').toUpperCase()) ||
+                  childNormalizedComment ===
+                    (String(child.name || '').toUpperCase() + ' ' +
+                     String(child.status || '').toUpperCase());
+
+                const childNotesText =
+                  childRawComment && !childRedundantStatusNote
+                    ? childRawComment
+                    : '';
+
+                const childMetaDetails = [
+                  child.confirmedBy
+                    ? 'Confirmed by ' + child.confirmedBy
+                    : '',
+                  child.confirmedAtUtc
+                    ? formatUtc(child.confirmedAtUtc)
+                    : ''
+                ].filter(Boolean).join(' · ');
+
                 return `
                   <div class="child-row">
                     <span>${esc(child.name)}</span>
                     ${statusPill(child.status, true)}
+                    ${childMetaDetails
+                      ? '<div class="child-service-meta">' +
+                          esc(childMetaDetails) +
+                        '</div>'
+                      : ''}
+                    ${childNotesText
+                      ? '<div class="child-service-note">' +
+                          esc(childNotesText) +
+                        '</div>'
+                      : ''}
                   </div>
                 `;
               }).join('')}
