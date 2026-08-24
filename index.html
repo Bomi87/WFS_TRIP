@@ -975,6 +975,13 @@
       letter-spacing: .04em;
     }
 
+    /* HL8372는 ROUTE 버튼 계열처럼 파란색으로 표시 */
+    .trip-detail-aircraft.trip-detail-aircraft-blue {
+      background: rgba(47, 139, 253, .22);
+      border-color: rgba(86, 163, 255, .32);
+      color: #9dccff;
+    }
+
     .trip-detail-inner {
       padding: 18px !important;
       background: transparent !important;
@@ -2388,7 +2395,13 @@ applyLocalFilters();
               <div class="trip-detail-label">
                 <span>TRIP DETAIL</span>
                 ${trip.aircraftRegistry
-                  ? '<span class="trip-detail-aircraft">' + esc(trip.aircraftRegistry) + '</span>'
+                  ? '<span class="trip-detail-aircraft ' +
+                      (String(trip.aircraftRegistry).trim().toUpperCase() === 'HL8372'
+                        ? 'trip-detail-aircraft-blue'
+                        : '') +
+                      '">' +
+                      esc(trip.aircraftRegistry) +
+                    '</span>'
                   : ''}
               </div>
 
