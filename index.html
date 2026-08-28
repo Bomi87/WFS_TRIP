@@ -360,90 +360,6 @@
       background: #d4dee8 !important;
     }
 
-    /* READY / NOT READY 대표 라벨 */
-    .s-ready {
-      color: #78e7b5 !important;
-      border-color: rgba(57, 202, 140, .38) !important;
-      background: rgba(57, 202, 140, .10) !important;
-    }
-
-    .s-ready .dot,
-    .s-ready i {
-      background: #39ca8c !important;
-      box-shadow: 0 0 0 3px rgba(57, 202, 140, .10) !important;
-    }
-
-    .s-not-ready {
-      color: #ffb13b !important;
-      border-color: rgba(255, 177, 59, .40) !important;
-      background: rgba(255, 177, 59, .10) !important;
-    }
-
-    .s-not-ready .dot,
-    .s-not-ready i {
-      background: #ffb13b !important;
-      box-shadow: 0 0 0 3px rgba(255, 177, 59, .10) !important;
-    }
-
-    /* ===== LEG 대표 상태 / Trip LEG 상태 요약 ===== */
-    .leg-representative-status {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      align-self: flex-start;
-      padding-top: 1px;
-      flex: 0 0 auto;
-    }
-
-    .leg-representative-status .pill {
-      min-height: 32px;
-      padding: 6px 11px;
-      font-size: .82rem;
-      font-weight: 700 !important;
-    }
-
-    .trip-leg-status-summary {
-      display: grid;
-      gap: 5px;
-      min-width: 150px;
-    }
-
-    .trip-leg-status-line {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      white-space: nowrap;
-    }
-
-    .trip-leg-status-line .leg-numbers {
-      color: #cbd8e5;
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .01em;
-    }
-
-    .trip-leg-status-line .status {
-      font-size: .76rem;
-      font-weight: 650 !important;
-    }
-
-    @media (max-width: 720px) {
-      .leg-representative-status {
-        justify-content: flex-start;
-        margin-top: 10px;
-      }
-
-      .trip-leg-status-summary {
-        width: 100%;
-        min-width: 0;
-      }
-
-      .trip-leg-status-line {
-        justify-content: flex-end;
-        flex-wrap: wrap;
-      }
-    }
-
     .section {
       padding: 12px 13px;
       border-bottom: 1px solid var(--line);
@@ -2451,7 +2367,7 @@ applyLocalFilters();
           <div class="active-trip-heading">
             <div>
               <h2>Active Trip</h2>
-              <p>'ROUTE' 버튼을 누르면 상세 준비상태를 확인할 수 있습니다.</p>
+              <p>항공기 등록번호 버튼을 누르면 상세 준비상태를 확인할 수 있습니다.</p>
             </div>
           </div>
 
@@ -2460,7 +2376,6 @@ applyLocalFilters();
               <thead>
                 <tr>
                   <th>TRIP NUMBER</th>
-                  <th>A/C</th>
                   <th>STATUS</th>
                   <th>FROM</th>
                   <th>TO</th>
@@ -2496,19 +2411,18 @@ applyLocalFilters();
                 type="button"
                 data-detail-id="${esc(detailId)}"
                 aria-expanded="false"
-              >ROUTE</button>
+              >${esc(trip.aircraftRegistry || 'A/C')}</button>
               <span class="trip-route-summary ${routeLineClass}">${esc(routeSummary)}</span>
             </div>
           </td>
-          <td data-label="A/C"><strong>${esc(trip.aircraftRegistry || 'N/A')}</strong></td>
-          <td data-label="STATUS">${renderTripLegStatusSummary(trip)}</td>
+          <td data-label="STATUS">${statusPill(trip.overallStatus)}</td>
           <td data-label="FROM">${esc(startDate)}</td>
           <td data-label="TO">${esc(endDate)}</td>
           <td data-label="LEGS"><strong>${trip.legCount || 0}</strong></td>
         </tr>
 
         <tr class="trip-detail-row" id="${esc(detailId)}">
-          <td colspan="6">
+          <td colspan="5">
             <div class="trip-detail-shell">
               <div class="trip-detail-label">
                 <span>TRIP DETAIL</span>
@@ -2583,16 +2497,22 @@ applyLocalFilters();
 
 
     function routeUnderlineClass(trip) {
-      const legs = Array.isArray(trip && trip.legs) ? trip.legs : [];
-      const statuses = legs.map(function (leg) {
-        return displayLegReadinessStatus(leg && leg.readinessStatus);
-      });
+      const summary = trip && trip.summary ? trip.summary : {};
 
-      if (statuses.indexOf('NOT READY') >= 0) {
+      // NO STATUS는 밑줄 색상 판정에 영향을 주지 않음
+      if (Number(summary.pending || 0) > 0 ||
+          Number(summary.inProgress || 0) > 0) {
         return 'pending';
       }
 
-      if (statuses.indexOf('READY') >= 0) {
+      const actionableCount =
+        Number(summary.confirmed || 0) +
+        Number(summary.completed || 0) +
+        Number(summary.own || 0);
+
+      if (actionableCount > 0 &&
+          Number(summary.pending || 0) === 0 &&
+          Number(summary.inProgress || 0) === 0) {
         return 'confirmed';
       }
 
@@ -2996,10 +2916,6 @@ applyLocalFilters();
               </div>
             </div>
 
-            <div class="leg-representative-status">
-              ${statusPill(displayLegReadinessStatus(leg.readinessStatus))}
-            </div>
-
             <div class="leg-summary-pills">
               ${renderPobSummaryButton(leg)}
               ${countPill('CONFIRMED', visibleSummary.confirmed)}
@@ -3169,69 +3085,6 @@ applyLocalFilters();
       `;
     }
 
-
-    function displayLegReadinessStatus(status) {
-      const s = String(status || '').trim().toUpperCase();
-
-      // 이전 캐시/구버전 상태가 잠시 남아 있어도 새 2단계 UI로 안전하게 변환합니다.
-      if (s === 'READY' || s === 'CONFIRMED') return 'READY';
-
-      if (
-        s === 'NOT READY' ||
-        s === 'ACTION REQUIRED' ||
-        s === 'IN PROGRESS' ||
-        s === 'PENDING' ||
-        s === 'CHECK'
-      ) {
-        return 'NOT READY';
-      }
-
-      // NO DATA 등 미정값은 운항 준비 완료로 오인하지 않도록 NOT READY로 표시
-      return 'NOT READY';
-    }
-
-
-    function renderTripLegStatusSummary(trip) {
-      const legs = Array.isArray(trip && trip.legs) ? trip.legs : [];
-
-      if (!legs.length) {
-        return statusPill(displayLegReadinessStatus(trip && trip.overallStatus), true);
-      }
-
-      const grouped = {
-        'READY': [],
-        'NOT READY': []
-      };
-
-      legs.forEach(function (leg, index) {
-        const status = displayLegReadinessStatus(leg && leg.readinessStatus);
-        const legNo = Number(leg && leg.legNo) || (index + 1);
-        grouped[status].push(legNo);
-      });
-
-      // NOT READY를 먼저 보여주고 READY를 뒤에 표시합니다.
-      const priority = ['NOT READY', 'READY'];
-
-      const lines = priority
-        .filter(function (status) {
-          return grouped[status] && grouped[status].length;
-        })
-        .map(function (status) {
-          const numbers = grouped[status]
-            .slice()
-            .sort(function (a, b) { return a - b; })
-            .join(', ');
-
-          return (
-            '<div class="trip-leg-status-line">' +
-              '<span class="leg-numbers">LEG ' + esc(numbers) + '</span>' +
-              statusPill(status, true) +
-            '</div>'
-          );
-        });
-
-      return '<div class="trip-leg-status-summary">' + lines.join('') + '</div>';
-    }
 
     function statusPill(status, compact) {
       const s = status || 'UNKNOWN';
