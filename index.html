@@ -2054,7 +2054,64 @@ header {
       color: #d9304f !important;
     }
 
-  </style>
+  
+/* ===== LEG 대표 READY / NOT READY 중앙 정렬 최종 보정 ===== */
+/*
+ * PC/태블릿에서는 LEG 헤더를 3열 Grid로 고정하여,
+ * 좌측 스케줄이나 우측 Crew/상태 Pill 길이가 달라도
+ * READY / NOT READY 대표 라벨이 모든 LEG에서 동일한 중앙선에 위치하도록 합니다.
+ */
+@media (min-width: 721px) {
+  .leg-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 14px !important;
+  }
+
+  .leg-schedule-wrap {
+    min-width: 0 !important;
+    justify-self: start !important;
+    width: 100% !important;
+  }
+
+  .leg-representative-status {
+    justify-self: center !important;
+    align-self: start !important;
+    margin: 0 !important;
+    padding-top: 1px !important;
+  }
+
+  .leg-summary-pills {
+    justify-self: end !important;
+    align-self: start !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+}
+
+/* 모바일은 기존 세로 배치를 유지 */
+@media (max-width: 720px) {
+  .leg-head {
+    display: block !important;
+  }
+
+  .leg-representative-status {
+    justify-content: flex-start !important;
+    margin-top: 10px !important;
+  }
+
+  .leg-summary-pills {
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 10px !important;
+    justify-content: flex-start !important;
+  }
+}
+
+</style>
 </head>
 <body>
   <div id="authScreen" style="
