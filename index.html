@@ -2150,6 +2150,67 @@ header {
   color: #ffffff !important;
 }
 
+
+
+/* ===== 최종 LEG 헤더 배치: 왼쪽 스케줄 / 오른쪽 CREW + READY ===== */
+@media (min-width: 721px) {
+  .leg-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 18px !important;
+  }
+
+  .leg-schedule-wrap {
+    min-width: 0 !important;
+    justify-self: start !important;
+    width: 100% !important;
+  }
+
+  .leg-summary-pills {
+    justify-self: end !important;
+    align-self: start !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-top: 1px !important;
+  }
+}
+
+/* 대표 READY / NOT READY 버튼 */
+.leg-summary-pills .leg-status-toggle.s-ready,
+.leg-summary-pills .leg-status-toggle.s-not-ready {
+  color: #ffffff !important;
+  min-height: 32px !important;
+  padding: 6px 11px !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+}
+
+/* 더 이상 중간 대표상태 영역은 사용하지 않음 */
+.leg-representative-status {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .leg-head {
+    display: block !important;
+  }
+
+  .leg-summary-pills {
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 10px !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2263,9 +2324,9 @@ header {
           if (!legCard) return;
 
           /*
-           * CONFIRMED / PENDING / OWN 중 하나를 누르면
+           * READY / NOT READY 버튼을 누르면
            * 열려 있던 CREW / PAX Manifest를 먼저 닫고
-           * Handling Status 상세영역을 표시합니다.
+           * 서비스 STATUS 상세영역을 표시합니다.
            */
           legCard.querySelectorAll('.pob-details.open').forEach(function (panel) {
             panel.classList.remove('open');
@@ -3030,8 +3091,20 @@ applyLocalFilters();
         return;
       }
 
-      const willOpen =
-        !panel.classList.contains('open');
+      const legCard = button.closest('.leg-card');
+      const willOpen = !panel.classList.contains('open');
+
+      /*
+       * CREW / PAX 명단을 열 때는 STATUS 상세영역을 닫습니다.
+       * 따라서 CREW/PAX ↔ READY/NOT READY 버튼으로 서로 전환할 수 있습니다.
+       */
+      if (willOpen && legCard) {
+        legCard.classList.remove('leg-open');
+
+        legCard.querySelectorAll('.leg-status-toggle').forEach(function (statusButton) {
+          statusButton.setAttribute('aria-expanded', 'false');
+        });
+      }
 
       panel.classList.toggle('open', willOpen);
       button.classList.toggle('open', willOpen);
@@ -3095,16 +3168,9 @@ applyLocalFilters();
               </div>
             </div>
 
-            <div class="leg-representative-status">
-              ${statusPill(displayLegReadinessStatus(leg.readinessStatus))}
-            </div>
-
             <div class="leg-summary-pills">
               ${renderPobSummaryButton(leg)}
-              ${countPill('CONFIRMED', visibleSummary.confirmed)}
-              ${countPill('IN PROGRESS', visibleSummary.inProgress)}
-              ${countPill('PENDING', visibleSummary.pending)}
-              ${countPill('OWN', visibleSummary.own)}
+              ${renderLegReadinessButton(leg)}
             </div>
           </div>
 
@@ -3335,6 +3401,12 @@ applyLocalFilters();
     function statusPill(status, compact) {
       const s = status || 'UNKNOWN';
       return `<span class="${compact ? 'status' : 'pill'} ${statusClass(s)}"><span class="dot"></span>${esc(statusLabel(s))}</span>`;
+    }
+
+
+    function renderLegReadinessButton(leg) {
+      const status = displayLegReadinessStatus(leg && leg.readinessStatus);
+      return `<button type="button" class="pill leg-status-toggle ${statusClass(status)}" aria-expanded="false"><span class="dot"></span>${esc(statusLabel(status))}</button>`;
     }
 
 
