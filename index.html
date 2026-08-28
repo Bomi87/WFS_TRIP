@@ -360,6 +360,31 @@
       background: #d4dee8 !important;
     }
 
+    /* READY / NOT READY 대표 라벨 */
+    .s-ready {
+      color: #78e7b5 !important;
+      border-color: rgba(57, 202, 140, .38) !important;
+      background: rgba(57, 202, 140, .10) !important;
+    }
+
+    .s-ready .dot,
+    .s-ready i {
+      background: #39ca8c !important;
+      box-shadow: 0 0 0 3px rgba(57, 202, 140, .10) !important;
+    }
+
+    .s-not-ready {
+      color: #ffb13b !important;
+      border-color: rgba(255, 177, 59, .40) !important;
+      background: rgba(255, 177, 59, .10) !important;
+    }
+
+    .s-not-ready .dot,
+    .s-not-ready i {
+      background: #ffb13b !important;
+      box-shadow: 0 0 0 3px rgba(255, 177, 59, .10) !important;
+    }
+
     /* ===== LEG 대표 상태 / Trip LEG 상태 요약 ===== */
     .leg-representative-status {
       display: flex;
@@ -2563,22 +2588,16 @@ applyLocalFilters();
         return displayLegReadinessStatus(leg && leg.readinessStatus);
       });
 
-      if (
-        statuses.indexOf('ACTION REQUIRED') >= 0 ||
-        statuses.indexOf('IN PROGRESS') >= 0 ||
-        statuses.indexOf('PENDING') >= 0 ||
-        statuses.indexOf('CHECK') >= 0
-      ) {
+      if (statuses.indexOf('NOT READY') >= 0) {
         return 'pending';
       }
 
-      if (statuses.indexOf('CONFIRMED') >= 0) {
+      if (statuses.indexOf('READY') >= 0) {
         return 'confirmed';
       }
 
       return 'neutral';
     }
-
 
 
     function renderMessageBox(trip) {
@@ -3152,43 +3171,46 @@ applyLocalFilters();
 
 
     function displayLegReadinessStatus(status) {
-      const s = String(status || 'NO DATA').trim().toUpperCase();
+      const s = String(status || '').trim().toUpperCase();
 
-      // 이전 캐시의 READY도 새 UI에서는 CONFIRMED로 표시합니다.
-      if (s === 'READY') return 'CONFIRMED';
-      return s || 'NO DATA';
+      // 이전 캐시/구버전 상태가 잠시 남아 있어도 새 2단계 UI로 안전하게 변환합니다.
+      if (s === 'READY' || s === 'CONFIRMED') return 'READY';
+
+      if (
+        s === 'NOT READY' ||
+        s === 'ACTION REQUIRED' ||
+        s === 'IN PROGRESS' ||
+        s === 'PENDING' ||
+        s === 'CHECK'
+      ) {
+        return 'NOT READY';
+      }
+
+      // NO DATA 등 미정값은 운항 준비 완료로 오인하지 않도록 NOT READY로 표시
+      return 'NOT READY';
     }
 
 
     function renderTripLegStatusSummary(trip) {
       const legs = Array.isArray(trip && trip.legs) ? trip.legs : [];
+
       if (!legs.length) {
         return statusPill(displayLegReadinessStatus(trip && trip.overallStatus), true);
       }
 
-      const grouped = {};
+      const grouped = {
+        'READY': [],
+        'NOT READY': []
+      };
 
       legs.forEach(function (leg, index) {
         const status = displayLegReadinessStatus(leg && leg.readinessStatus);
         const legNo = Number(leg && leg.legNo) || (index + 1);
-
-        if (!grouped[status]) grouped[status] = [];
         grouped[status].push(legNo);
       });
 
-      // 운항상 주의가 필요한 상태부터 위에 표시합니다.
-      const priority = [
-        'ACTION REQUIRED',
-        'IN PROGRESS',
-        'PENDING',
-        'CHECK',
-        'CONFIRMED',
-        'NO DATA'
-      ];
-
-      Object.keys(grouped).forEach(function (status) {
-        if (priority.indexOf(status) < 0) priority.push(status);
-      });
+      // NOT READY를 먼저 보여주고 READY를 뒤에 표시합니다.
+      const priority = ['NOT READY', 'READY'];
 
       const lines = priority
         .filter(function (status) {
@@ -3210,7 +3232,6 @@ applyLocalFilters();
 
       return '<div class="trip-leg-status-summary">' + lines.join('') + '</div>';
     }
-
 
     function statusPill(status, compact) {
       const s = status || 'UNKNOWN';
