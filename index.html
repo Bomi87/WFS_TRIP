@@ -2211,6 +2211,16 @@ header {
   }
 }
 
+
+
+/* ===== TRIP DETAIL / 항공기 등록번호를 동일 텍스트 스타일로 표시 ===== */
+.trip-detail-label > span {
+  color: inherit !important;
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  font-weight: inherit !important;
+}
+
 </style>
 </head>
 <body>
@@ -2666,16 +2676,11 @@ applyLocalFilters();
           <td colspan="5">
             <div class="trip-detail-shell">
               <div class="trip-detail-label">
-                <span>TRIP DETAIL</span>
-                ${trip.aircraftRegistry
-                  ? '<span class="trip-detail-aircraft ' +
-                      (String(trip.aircraftRegistry).trim().toUpperCase() === 'HL8372'
-                        ? 'trip-detail-aircraft-blue'
-                        : '') +
-                      '">' +
-                      esc(trip.aircraftRegistry) +
-                    '</span>'
-                  : ''}
+                <span>
+                  TRIP DETAIL${trip.aircraftRegistry
+                    ? ' / ' + esc(trip.aircraftRegistry)
+                    : ''}
+                </span>
               </div>
 
               <div class="trip-detail-inner">
