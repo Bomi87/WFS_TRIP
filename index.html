@@ -1851,6 +1851,27 @@ header {
       font-weight: 900;
     }
 
+    /* ===== Manifest RAW 검증 표시 ===== */
+    /* RAW에 같은 사람이 있고 해당 필드만 다르면 그 셀만 RED */
+    .pob-raw-mismatch {
+      color: #ff7f8d !important;
+      background: rgba(239, 102, 114, .13) !important;
+      font-weight: 900 !important;
+      cursor: help;
+    }
+
+    /* RAW CREW/PAX에 사람 자체가 없으면 해당 사람 행 전체 GREY */
+    .pob-raw-not-found td {
+      color: #7d8fa2 !important;
+      background: rgba(125, 143, 162, .10) !important;
+    }
+
+    .pob-raw-not-found .pob-role {
+      color: #8798aa !important;
+      border-color: rgba(125, 143, 162, .24) !important;
+      background: rgba(125, 143, 162, .08) !important;
+    }
+
     @media (max-width: 720px) {
       .pob-summary-button {
         max-width: min(100%, 330px);
@@ -2975,6 +2996,77 @@ applyLocalFilters();
     }
 
 
+    function getPobRawValidation_(person) {
+      return (
+        person &&
+        person.rawValidation &&
+        typeof person.rawValidation === 'object'
+      )
+        ? person.rawValidation
+        : null;
+    }
+
+
+    function getPobRawFieldClass_(
+      person,
+      fieldName,
+      extraClass
+    ) {
+      const validation =
+        getPobRawValidation_(person);
+
+      const classes = [];
+
+      if (extraClass) {
+        classes.push(extraClass);
+      }
+
+      if (
+        validation &&
+        validation.available === true &&
+        validation.found === true &&
+        validation.fields &&
+        validation.fields[fieldName] &&
+        validation.fields[fieldName].match === false
+      ) {
+        classes.push(
+          'pob-raw-mismatch'
+        );
+      }
+
+      return classes.join(' ');
+    }
+
+
+    function getPobRawFieldTitle_(
+      person,
+      fieldName
+    ) {
+      const validation =
+        getPobRawValidation_(person);
+
+      if (
+        !validation ||
+        validation.available !== true ||
+        validation.found !== true ||
+        !validation.fields ||
+        !validation.fields[fieldName] ||
+        validation.fields[fieldName].match !== false
+      ) {
+        return '';
+      }
+
+      const rawValue =
+        String(
+          validation.fields[fieldName].rawValue || ''
+        ).trim();
+
+      return rawValue
+        ? 'RAW: ' + rawValue
+        : 'RAW: (blank)';
+    }
+
+
     function renderPobRows(people) {
       if (!Array.isArray(people) || !people.length) {
         return (
@@ -2987,15 +3079,109 @@ applyLocalFilters();
       }
 
       return people.map(function (person) {
-        const name = String(person && person.name || '').trim();
-        const role = String(person && person.role || '').trim();
-        const expiry = String(
-          person && person.passportExpiry || ''
-        ).trim();
+        person = person || {};
+
+        const name =
+          String(person.name || '').trim();
+
+        const role =
+          String(person.role || '').trim();
+
+        const expiry =
+          String(person.passportExpiry || '').trim();
+
+        const validation =
+          getPobRawValidation_(person);
+
+        const rowClass =
+          validation &&
+          validation.available === true &&
+          validation.found === false
+            ? 'pob-raw-not-found'
+            : '';
+
+        function renderCell_(
+          value,
+          fieldName,
+          extraClass
+        ) {
+          const cellClass =
+            getPobRawFieldClass_(
+              person,
+              fieldName,
+              extraClass
+            );
+
+          const title =
+            getPobRawFieldTitle_(
+              person,
+              fieldName
+            );
+
+          return (
+            '<td' +
+              (
+                cellClass
+                  ? ' class="' +
+                      esc(cellClass) +
+                    '"'
+                  : ''
+              ) +
+              (
+                title
+                  ? ' title="' +
+                      esc(title) +
+                    '"'
+                  : ''
+              ) +
+            '>' +
+              esc(
+                String(value || '-')
+              ) +
+            '</td>'
+          );
+        }
+
+        const nameClass =
+          getPobRawFieldClass_(
+            person,
+            'name',
+            ''
+          );
+
+        const nameTitle =
+          getPobRawFieldTitle_(
+            person,
+            'name'
+          );
 
         return (
-          '<tr>' +
-            '<td>' +
+          '<tr' +
+            (
+              rowClass
+                ? ' class="' +
+                    esc(rowClass) +
+                  '"'
+                : ''
+            ) +
+          '>' +
+
+            '<td' +
+              (
+                nameClass
+                  ? ' class="' +
+                      esc(nameClass) +
+                    '"'
+                  : ''
+              ) +
+              (
+                nameTitle
+                  ? ' title="' +
+                      esc(nameTitle) +
+                    '"'
+                  : ''
+              ) +
+            '>' +
               esc(name || '-') +
               (
                 role
@@ -3005,25 +3191,39 @@ applyLocalFilters();
                   : ''
               ) +
             '</td>' +
-            '<td>' +
-              esc(person && person.passportNumber || '-') +
-            '</td>' +
-            '<td class="' +
-              (person && person.isExpired === true
+
+            renderCell_(
+              person.passportNumber,
+              'passportNumber',
+              ''
+            ) +
+
+            renderCell_(
+              expiry,
+              'passportExpiry',
+              person.isExpired === true
                 ? 'pob-expired'
-                : '') +
-            '">' +
-              esc(expiry || '-') +
-            '</td>' +
-            '<td>' +
-              esc(person && person.nationality || '-') +
-            '</td>' +
-            '<td>' +
-              esc(person && person.dateOfBirth || '-') +
-            '</td>' +
-            '<td>' +
-              esc(person && person.gender || '-') +
-            '</td>' +
+                : ''
+            ) +
+
+            renderCell_(
+              person.nationality,
+              'nationality',
+              ''
+            ) +
+
+            renderCell_(
+              person.dateOfBirth,
+              'dateOfBirth',
+              ''
+            ) +
+
+            renderCell_(
+              person.gender,
+              'gender',
+              ''
+            ) +
+
           '</tr>'
         );
       }).join('');
