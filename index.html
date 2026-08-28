@@ -2242,7 +2242,28 @@ header {
   font-weight: inherit !important;
 }
 
-</style>
+
+    /* ===== Manifest RAW 검증 최종 우선순위 보정 ===== */
+    /* 기존 WFS 테이블의 white/black !important 규칙보다 더 강하게 적용 */
+    .pob-table td.pob-raw-mismatch {
+      color: #d9304f !important;
+      background: #fff0f2 !important;
+      font-weight: 900 !important;
+      cursor: help;
+    }
+
+    .pob-table tr.pob-raw-not-found td {
+      color: #7d8fa2 !important;
+      background: #eef1f4 !important;
+    }
+
+    .pob-table tr.pob-raw-not-found .pob-role {
+      color: #7d8fa2 !important;
+      border-color: rgba(125, 143, 162, .28) !important;
+      background: rgba(125, 143, 162, .10) !important;
+    }
+
+  </style>
 </head>
 <body>
   <div id="authScreen" style="
