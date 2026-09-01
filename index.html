@@ -1851,6 +1851,13 @@ header {
       font-weight: 900;
     }
 
+    .pob-expiring-soon {
+      color: #0f172a;
+      background: #fde68a;
+      font-weight: 900;
+      cursor: help;
+    }
+
     /* ===== Manifest RAW 검증 표시 ===== */
     /* RAW에 같은 사람이 있고 해당 필드만 다르면 그 셀만 RED */
     .pob-raw-mismatch {
@@ -2734,7 +2741,9 @@ applyLocalFilters();
 
               </div>
 
-                ${(trip.legs || []).map(renderLeg).join('')}
+                ${(trip.legs || []).map(function (leg) {
+                  return renderLeg(leg, endDate);
+                }).join('')}
               </div>
             </div>
           </td>
@@ -3088,7 +3097,49 @@ applyLocalFilters();
     }
 
 
-    function renderPobRows(people) {
+    function parseIsoDateOnly_(value) {
+      const match = String(value || '').trim().match(
+        /^(\d{4})-(\d{2})-(\d{2})/
+      );
+
+      if (!match) {
+        return null;
+      }
+
+      const date = new Date(Date.UTC(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3])
+      ));
+
+      return Number.isNaN(date.getTime())
+        ? null
+        : date;
+    }
+
+
+    function isPassportExpiringWithinSixMonths_(
+      passportExpiry,
+      tripEndDate
+    ) {
+      const expiryDate = parseIsoDateOnly_(passportExpiry);
+      const endDate = parseIsoDateOnly_(tripEndDate);
+
+      if (!expiryDate || !endDate || expiryDate < endDate) {
+        return false;
+      }
+
+      const sixMonthsAfterTrip = new Date(endDate.getTime());
+      sixMonthsAfterTrip.setUTCMonth(
+        sixMonthsAfterTrip.getUTCMonth() + 6
+      );
+
+      /* 정확히 6개월이 되는 날은 경고 대상에서 제외 */
+      return expiryDate < sixMonthsAfterTrip;
+    }
+
+
+    function renderPobRows(people, tripEndDate) {
       if (!Array.isArray(people) || !people.length) {
         return (
           '<tr>' +
@@ -3111,6 +3162,13 @@ applyLocalFilters();
         const expiry =
           String(person.passportExpiry || '').trim();
 
+        const expiringSoon =
+          person.isExpired !== true &&
+          isPassportExpiringWithinSixMonths_(
+            expiry,
+            tripEndDate
+          );
+
         const validation =
           getPobRawValidation_(person);
 
@@ -3124,7 +3182,8 @@ applyLocalFilters();
         function renderCell_(
           value,
           fieldName,
-          extraClass
+          extraClass,
+          extraTitle
         ) {
           const cellClass =
             getPobRawFieldClass_(
@@ -3134,7 +3193,7 @@ applyLocalFilters();
             );
 
           const title =
-            getPobRawFieldTitle_(
+            extraTitle || getPobRawFieldTitle_(
               person,
               fieldName
             );
@@ -3224,6 +3283,11 @@ applyLocalFilters();
               'passportExpiry',
               person.isExpired === true
                 ? 'pob-expired'
+                : expiringSoon
+                  ? 'pob-expiring-soon'
+                  : '',
+              expiringSoon
+                ? '여권 만료일까지 6개월 미만 남았으니 확인이 필요합니다.'
                 : ''
             ) +
 
@@ -3251,7 +3315,7 @@ applyLocalFilters();
     }
 
 
-    function renderPobGroup(title, people) {
+    function renderPobGroup(title, people, tripEndDate) {
       return (
         '<section class="pob-group">' +
           '<div class="pob-group-title">' +
@@ -3270,7 +3334,7 @@ applyLocalFilters();
                 '</tr>' +
               '</thead>' +
               '<tbody>' +
-                renderPobRows(people) +
+                renderPobRows(people, tripEndDate) +
               '</tbody>' +
             '</table>' +
           '</div>' +
@@ -3279,7 +3343,7 @@ applyLocalFilters();
     }
 
 
-    function renderPobDetails(leg) {
+    function renderPobDetails(leg, tripEndDate) {
       const pob = getLegPobInfo(leg);
 
       if (
@@ -3297,8 +3361,8 @@ applyLocalFilters();
         '<div ' +
           'class="pob-details" ' +
           'id="pobDetails-' + esc(elementId) + '">' +
-            renderPobGroup('Crew', pob.crew) +
-            renderPobGroup('Pax', pob.pax) +
+            renderPobGroup('Crew', pob.crew, tripEndDate) +
+            renderPobGroup('Pax', pob.pax, tripEndDate) +
         '</div>'
       );
     }
@@ -3341,7 +3405,7 @@ applyLocalFilters();
     }
 
 
-    function renderLeg(leg) {
+    function renderLeg(leg, tripEndDate) {
       const alerts = leg.annunciators || {};
 
       const depRaw = leg.stations && leg.stations.departure || {};
@@ -3400,7 +3464,7 @@ applyLocalFilters();
             </div>
           </div>
 
-          ${renderPobDetails(leg)}
+          ${renderPobDetails(leg, tripEndDate)}
 
           <div class="leg-detail-content" id="legDetails-${esc(elementId)}">
           ${(alerts.items || []).length ? `
